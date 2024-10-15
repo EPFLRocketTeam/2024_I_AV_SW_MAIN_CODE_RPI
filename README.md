@@ -61,12 +61,6 @@ ps -eLo start,pid,user,policy,rtprio,psr,command | grep '[r]ocket'
 ```
 We use brackets to avoid matching the grep program itself.
 
-## Tests
-- Multiple tasks
-- Logging
-- Imports
-- Tasks longer than period
-
 ## Questions
 - Do we need to pass parameters to the task function?
 - How should tasks communicate?
@@ -74,7 +68,6 @@ We use brackets to avoid matching the grep program itself.
 - Should we set a stack size and lock memory?
 
 ## Possible ameliorations
-- Verify parameters
 - Monitoring
 - Parameters passing
 - Stop and destroy tasks(destructor for Task)
