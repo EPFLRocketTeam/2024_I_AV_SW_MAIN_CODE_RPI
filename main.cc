@@ -8,17 +8,22 @@ void *task_function_1()
     cout << "Hello from task 1!" << endl;
     return nullptr;
 }
+
 // Task function for task 2.
 void *task_function_2()
 {
     cout << "Hello from task 2!" << endl;
     return nullptr;
 }
+
+// Task function for task 2.
 void *task_function_3()
 {
     cout << "Hello from task 3!" << endl;
     return nullptr;
 }
+
+// Task function for task 2.
 void *task_function_4()
 {
     cout << "Hello from task 4!" << endl;
