@@ -9,6 +9,13 @@ It is based on the [Real Time Linux project documentation](https://wiki.linuxfou
 The aim of this program will be to manage all of the tasks running on the Raspberry Pi.
 
 
+## Copy files to the raspberry pi
+You can easily copy the entire project to the raspberry pi by running:
+```
+rsync * username@pi.local:destination/path --exclude='/.git' -v
+```
+Be sure to modify the username and destination path to correspond to the device you are using.
+
 ## Compilation
 First, you need to update dependencies:
 ```
