@@ -69,7 +69,7 @@ int Task::prepare_task()
     // Could lock memory and set stack size here
 
     CHECK_ERROR(pthread_attr_init(&thread_attributes));
-
+    
     struct sched_param param;
     param.sched_priority = priority;
     CHECK_ERROR(pthread_attr_setschedpolicy(&thread_attributes, SCHED_FIFO));
@@ -87,7 +87,7 @@ int Task::prepare_task()
 int Task::start_task()
 {
     clock_gettime(CLOCK_MONOTONIC, &next_period);
-    int return_code = pthread_create(&thread, &thread_attributes, task_loop_wrapper, nullptr);
+    int return_code = pthread_create(&thread, &thread_attributes, task_loop_wrapper, this);
     if (return_code)
     {
         std::cout << "Create pthread failed with error code " << return_code
