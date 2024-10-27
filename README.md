@@ -1,4 +1,5 @@
-# Icarus Commander
+# Icarus main code
+*Also known as Abraracourcix*
 
 This is a C++ proof of concept program designed to demonstrate task management on a multi-core system running a real-time operating system. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
 
@@ -55,7 +56,7 @@ Format:
 - **command**: command name
 
 Additional information can be found in the manual: `man ps`  
-Finally, to only show our processes, one can pipe the output of `ps` into `grep`:
+Finally, to only show our threads, one can pipe the output of `ps` into `grep`:
 ```
 ps -eLo start,pid,user,policy,rtprio,psr,command | grep '[r]ocket'
 ```

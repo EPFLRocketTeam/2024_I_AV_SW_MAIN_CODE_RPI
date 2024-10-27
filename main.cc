@@ -1,33 +1,32 @@
 #include "task.h"
 #include <iostream>
+#include <unistd.h>
 using namespace std;
 
-void *task_function_1()
+void *low_prio_function()
 {
-    cout << "Hello from task 1!" << endl;
+    cout << "Hello from low priority task!" << endl;
     return nullptr;
 }
 
-void *task_function_2()
+void *high_prio_function()
 {
-    cout << "Hello from task 2!" << endl;
+    cout << "Hello from high priority task!" << endl;
     return nullptr;
 }
 
 int main()
 {
-    Task tasks[] = {
-        Task("task1", 100e6, 90, 0, task_function_1),
-        Task("task2", 50e6, 80, 3, task_function_2)
-    };
+    // Testing that a low priority task can be preempted by a high priority task
+    Task low_priority_task = Task("low priority task", 0, 80, 0, low_prio_function);
+    Task high_priority_task = Task("high priority task", 0, 90, 0, high_prio_function);
 
-    for (auto &task : tasks) {
-        task.start_task();
-    }
+    low_priority_task.start_task();
+    sleep(10);
+    high_priority_task.start_task();
 
-    for (auto &task : tasks) {
-        task.wait_for_task();
-    }
+    low_priority_task.wait_for_task();
+    high_priority_task.wait_for_task();
 
     return 0;
 }
