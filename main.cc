@@ -18,6 +18,7 @@ void *high_prio_function()
 int main()
 {
     // Testing that a low priority task can be preempted by a high priority task
+    // Initialize tasks with name, period, priority, CPU core, and function.
     Task low_priority_task = Task("low priority task", 0, 80, 0, low_prio_function);
     Task high_priority_task = Task("high priority task", 0, 90, 0, high_prio_function);
 
