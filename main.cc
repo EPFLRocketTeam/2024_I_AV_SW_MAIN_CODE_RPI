@@ -1,6 +1,9 @@
 #include "task.h"
-#include <iostream>
+#include "logging.h"
+#include "configure.h"
 #include <unistd.h>
+
+#include <iostream>
 using namespace std;
 
 void *low_prio_function()
@@ -15,8 +18,11 @@ void *high_prio_function()
     return nullptr;
 }
 
+
 int main()
 {
+    check_cpuisolation(3);
+
     // Testing that a low priority task can be preempted by a high priority task
     // Initialize tasks with name, period, priority, CPU core, and function.
     Task low_priority_task = Task("low priority task", 0, 80, 0, low_prio_function);
@@ -31,3 +37,4 @@ int main()
 
     return 0;
 }
+

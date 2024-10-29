@@ -12,27 +12,27 @@ The aim of this program will be to manage all of the tasks running on the Raspbe
 
 ## Copy files to the raspberry pi
 You can easily copy the entire project to the raspberry pi by running:
-```
-rsync * username@pi.local:destination/path --exclude='/.git' -v
-```
+
+    rsync * username@pi.local:destination/path --exclude='/.git' -v
+
 Be sure to modify the username and destination path to correspond to the device you are using.
 
 ## Compilation
 First, you need to update dependencies:
-```
-make depend
-```
+
+    make depend
+
 
 Then, once connected to the rpi, compile the executable by running:
-```
-make rocket
-```
+
+    make rocket
+
 
 ## Execution
 You need sudo privileges in order to set a scheduling policy to a thread. Don't forget to use sudo!
-```
-sudo ./rocket
-```
+
+    sudo ./rocket
+
 
 ## Debugging
 The `ps` utility can be use to list running processes.
@@ -57,18 +57,21 @@ Format:
 
 Additional information can be found in the manual: `man ps`  
 Finally, to only show our threads, one can pipe the output of `ps` into `grep`:
-```
-ps -eLo start,pid,user,policy,rtprio,psr,command | grep '[r]ocket'
-```
+
+    ps -eLo start,pid,user,policy,rtprio,psr,command | grep '[r]ocket'
+
 We use brackets to avoid matching the grep program itself.
 
-## Questions
-- Do we need to pass parameters to the task function?
-- How should tasks communicate?
-- Should we monitor tasks?
-- Should we set a stack size and lock memory?
+## CPU Isolation
+To paraphrase [the wiki](https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cpu-partitioning/start), the `isolcpus` kernel parameter can be used to specify CPUs to be isolated from the scheduler algorithms. The argument is a CPU core list:
+
+    isolcpus=<cpu number>,….,<cpu number>
+
+Some other system threads may still be started on the core. See https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cpu-partitioning/start#cpu_affinity_and_kworkers and https://forums.raspberrypi.com/viewtopic.php?t=228727 for potential solutions. Those could potentially be isolated if needed, but the process may involve recompiling the kernel...
 
 ## Possible ameliorations
-- Monitoring
-- Parameters passing
-- Stop and destroy tasks(destructor for Task)
+- Error handling
+- Watchdog: logging, stopping unresponsive tasks
+- Pre-set stack size and memory
+- Test latencies!
+- Tune turbo and system cpu limits: https://forums.raspberrypi.com/viewtopic.php?t=228727

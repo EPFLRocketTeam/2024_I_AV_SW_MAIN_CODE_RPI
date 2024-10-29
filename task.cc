@@ -5,6 +5,7 @@
 #include <cstring> 
 
 // Macro to check for errors in function calls
+// These errors are CRITICAL
 #define CHECK_ERROR(function_call)                                                   \
     {                                                                                \
         int return_code = (function_call);                                           \
@@ -121,6 +122,7 @@ int Task::start_task()
     int return_code = pthread_create(&thread, &thread_attributes, task_loop_wrapper, this);
     if (return_code)
     {
+        // This error is FATAL. We cannot continue if the task fails to start.
         std::cout << "Create pthread failed with error code " << return_code
                   << " (" << strerror(return_code) << ")" << std::endl;
         if (return_code == EPERM)
