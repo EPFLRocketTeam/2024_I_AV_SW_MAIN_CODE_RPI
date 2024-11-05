@@ -75,3 +75,5 @@ Some other system threads may still be started on the core. See https://wiki.lin
 - Pre-set stack size and memory
 - Test latencies!
 - Tune turbo and system cpu limits: https://forums.raspberrypi.com/viewtopic.php?t=228727
+
+https://shuhaowu.com/blog/2022/04-linux-rt-appdev-part4.html
