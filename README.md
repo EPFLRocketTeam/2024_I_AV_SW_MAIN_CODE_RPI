@@ -1,34 +1,69 @@
 # Icarus main code
-*Also known as Abraracourcix*
+## Introduction
+This is the entry point of the code running on the CM4 of the avionics of project Icarus. It implements task management on a multi-core system running a real-time operating system. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
 
-This is a C++ proof of concept program designed to demonstrate task management on a multi-core system running a real-time operating system. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
-
-It is based on the [Real Time Linux project documentation](https://wiki.linuxfoundation.org/realtime/documentation/start) and the [Avionics Software Diagram](https://rocket-team.epfl.ch/en/icarus/avionics/2024_I_AV_OVERVIEW)
+This diagram shows the tasks managed by the main code and their dedicated cpu core.
 
 ![Architecure diagram](architecture.png)
 
 The aim of this program will be to manage all of the tasks running on the Raspberry Pi.
 
+## Installation
+> [!NOTE]  
+> This project should obviously be complied and run on a raspberry pi running Linux with the PREEMPT RT patchset. However, it still works to a certain extent on a regular Linux machine like Ubuntu.
 
-## Copy files to the raspberry pi
-You can easily copy the entire project to the raspberry pi by running:
+### Configuration of the raspberry pi
+TODO
 
-    rsync * username@pi.local:destination/path --exclude='/.git' -v
+### Connect to the raspberry pi
+As of the 7.11.2024, the Raspberry Pi 4 of avionics is has this specific configuration:
 
-Be sure to modify the username and destination path to correspond to the device you are using.
+* WIFI uname: `ert`
+* WIFI pwd: `ERT123ert`
+* RPI  uname: `ert`
+* RPI  pwd: `ERT123ert`
 
-## Compilation
-First, you need to update dependencies:
+This means that, on startup, the RPI will try to connect to a network named `ert` with the password `ERT123ert`. You can create this network by sharing your phone connection for example.
 
-    make depend
+Then, you can connect to it using ssh:
 
+    ssh ert@pi.local
 
-Then, once connected to the rpi, compile the executable by running:
+Here, `ert` is the RPI uname. You will be then be prompted for a password. This is the RPI password, `ERT123ert` in this case. You  should then be connected to the RPI.
 
-    make rocket
+Additionally, here is the configuration of Daniel's RPI 3B+
 
+* WIFI uname: `ert`
+* WIFI pwd: `ERT123ert`
+* RPI  uname: `daniel`
+* RPI  pwd: `ert2024`
 
-## Execution
+### Copy files to the raspberry pi
+You can easily copy files to the RPI by using `rsync` from your computer:
+
+    rsync * ert@pi.local: --exclude='/.git'
+
+This will copy your current directory to the home directory of the RPI, assuming you are connected to the same network and the pi name is `ert`.
+
+### Requirements
+The following packages are required to compile this project:
+
+* `cmake`
+
+You can install them by running these commands:
+
+    sudo apt update
+    sudo apt install -y cmake
+
+### Compilation
+From the main directory of the project, run these commands:
+
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+## Usage
 You need sudo privileges in order to set a scheduling policy to a thread. Don't forget to use sudo!
 
     sudo ./rocket
@@ -76,4 +111,6 @@ Some other system threads may still be started on the core. See https://wiki.lin
 - Test latencies!
 - Tune turbo and system cpu limits: https://forums.raspberrypi.com/viewtopic.php?t=228727
 
-https://shuhaowu.com/blog/2022/04-linux-rt-appdev-part4.html
+## Sources:
+- https://shuhaowu.com/blog/2022/04-linux-rt-appdev-part4.html
+- https://wiki.linuxfoundation.org/realtime/documentation/start
