@@ -1,0 +1,5 @@
+set(SRC_DIR "${PROJECT_SOURCE_DIR}/app")
+file(GLOB SOURCES "${SRC_DIR}/*.cc")
+file(GLOB HEADERS "${SRC_DIR}/*.h")
+add_executable(rocket ${SOURCES} ${HEADERS})
+target_link_libraries(rocket taskslib pthread)
