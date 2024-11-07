@@ -1,5 +1,4 @@
 #include "configure.h"
-#include "logging.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -10,8 +9,7 @@
 void check_cpuisolation(int cpu_number) {
     std::ifstream file("/boot/firmware/cmdline.txt");
     if (!file.is_open()) {
-        error(WARNING, "Failed to open /boot/firmware/cmdline.txt\nAre you running on a Raspberry Pi?");
-        return;
+        throw std::runtime_error("Failed to open /boot/firmware/cmdline.txt\nAre you running on a Raspberry Pi?");
     }
 
     std::string line;
@@ -21,8 +19,7 @@ void check_cpuisolation(int cpu_number) {
     std::string isolcpus_str = "isolcpus=";
     size_t isolcpus_pos = line.find(isolcpus_str);
     if (isolcpus_pos == std::string::npos) {
-        error(WARNING, "isolcpus= not found in /boot/firmware/cmdline.txt\nPlease isolate CPU cores in cmdline.txt and reboot.");
-        return;
+        throw std::runtime_error("isolcpus= not found in /boot/firmware/cmdline.txt\nPlease isolate CPU cores in cmdline.txt and reboot.");
     }
 
     // Extract the substring starting from 'isolcpus='
@@ -40,12 +37,10 @@ void check_cpuisolation(int cpu_number) {
 
     // Check if the cpu_number is in the list
     if (std::find(cpu_list.begin(), cpu_list.end(), std::to_string(cpu_number)) == cpu_list.end()) {
-        error(WARNING, "CPU core " + std::to_string(cpu_number) + " is not isolated!\nPlease edit /boot/firmware/cmdline.txt and reboot.");
-        return;
+        throw std::runtime_error("CPU core " + std::to_string(cpu_number) + " is not isolated!\nPlease edit /boot/firmware/cmdline.txt and reboot.");
     }
-
-    print(INFO, "CPU core " + std::to_string(cpu_number) + " is isolated.");
 }
 
-// Possible improvements:
+// Things to add in this file:
+// - Memory locking
 // - Tune turbo and system cpu limits: https://forums.raspberrypi.com/viewtopic.php?t=228727

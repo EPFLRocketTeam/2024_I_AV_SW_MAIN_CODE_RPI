@@ -24,7 +24,7 @@ clean:
 	@/bin/rm -f *.o *.cc~ *.h~ $(EXEC) $(OFILES)
 
 # DO NOT DELETE THIS LINE
-configure.o: configure.cc configure.h logging.h
-logging.o: logging.cc logging.h
-main.o: main.cc task.h logging.h configure.h
+configure.o: configure.cc configure.h
+example_task.o: example_task.cc example_task.h task.h
+main.o: main.cc example_task.h task.h
 task.o: task.cc task.h

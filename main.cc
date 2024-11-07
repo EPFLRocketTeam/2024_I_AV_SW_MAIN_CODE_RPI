@@ -1,40 +1,9 @@
-#include "task.h"
-#include "logging.h"
-#include "configure.h"
-#include <unistd.h>
-
-#include <iostream>
-using namespace std;
-
-void *low_prio_function()
-{
-    cout << "Hello from low priority task!" << endl;
-    return nullptr;
-}
-
-void *high_prio_function()
-{
-    cout << "Hello from high priority task!" << endl;
-    return nullptr;
-}
-
+#include "example_task.h"
 
 int main()
 {
-    check_cpuisolation(3);
-
-    // Testing that a low priority task can be preempted by a high priority task
-    // Initialize tasks with name, period, priority, CPU core, and function.
-    Task low_priority_task = Task("low priority task", 0, 80, 0, low_prio_function);
-    Task high_priority_task = Task("high priority task", 0, 90, 0, high_prio_function);
-
-    low_priority_task.start_task();
-    sleep(10);
-    high_priority_task.start_task();
-
-    low_priority_task.wait_for_task();
-    high_priority_task.wait_for_task();
-
+    ExampleTask example_task;
+    example_task.start_task();
+    example_task.wait_for_task();
     return 0;
 }
-
