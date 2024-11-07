@@ -6,11 +6,13 @@
 #include <vector>
 #include <algorithm>
 
-void check_cpuisolation(int cpu_number) {
+// Could potentially be made simpler by using sched_getaffinity :shrug:
+bool is_cpu_isolated(int cpu_number) {
     std::ifstream file("/boot/firmware/cmdline.txt");
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open /boot/firmware/cmdline.txt\nAre you running on a Raspberry Pi?");
     }
+
 
     std::string line;
     std::getline(file, line);
@@ -19,7 +21,7 @@ void check_cpuisolation(int cpu_number) {
     std::string isolcpus_str = "isolcpus=";
     size_t isolcpus_pos = line.find(isolcpus_str);
     if (isolcpus_pos == std::string::npos) {
-        throw std::runtime_error("isolcpus= not found in /boot/firmware/cmdline.txt\nPlease isolate CPU cores in cmdline.txt and reboot.");
+        return false;
     }
 
     // Extract the substring starting from 'isolcpus='
@@ -37,8 +39,10 @@ void check_cpuisolation(int cpu_number) {
 
     // Check if the cpu_number is in the list
     if (std::find(cpu_list.begin(), cpu_list.end(), std::to_string(cpu_number)) == cpu_list.end()) {
-        throw std::runtime_error("CPU core " + std::to_string(cpu_number) + " is not isolated!\nPlease edit /boot/firmware/cmdline.txt and reboot.");
+        return false;
     }
+
+    return true;
 }
 
 // Things to add in this file:

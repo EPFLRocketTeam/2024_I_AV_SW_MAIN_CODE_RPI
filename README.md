@@ -47,7 +47,7 @@ Additionally, here is the configuration of Daniel's RPI 3B+
 ### Copy files to the raspberry pi
 You can easily copy files to the RPI by using `rsync` from your computer:
 
-    rsync * ert@pi.local: --exclude='/.git'
+    rsync * ert@pi.local: --exclude='/.git' --exclude='/build' -tvr
 
 This will copy your current directory to the home directory of the RPI, assuming you are connected to the same network and the pi name is `ert`.
 
@@ -112,11 +112,9 @@ Format:
 - **command**: command name
 
 Additional information can be found in the manual: `man ps`  
-Finally, to only show our threads, one can pipe the output of `ps` into `grep`:
+Finally, to only show certain threads, one can pipe the output of `ps` into `grep`:
 
-    ps -eLo start,pid,user,policy,rtprio,psr,command | grep '[r]ocket'
-
-We use brackets to avoid matching the grep program itself.
+    ps -eLo start,pid,user,policy,rtprio,psr,command | grep 'rocket'
 
 ## CPU Isolation
 To paraphrase [the wiki](https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cpu-partitioning/start), the `isolcpus` kernel parameter can be used to specify CPUs to be isolated from the scheduler algorithms. The argument is a CPU core list:
