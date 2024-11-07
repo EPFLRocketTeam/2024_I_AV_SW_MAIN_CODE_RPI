@@ -1,4 +1,4 @@
-# Icarus main code
+# Icarus RPI main code
 ## Introduction
 This is the entry point of the code running on the CM4 of the avionics of project Icarus. It implements task management on a multi-core system running a real-time operating system. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
 
