@@ -13,7 +13,7 @@ Task::Task(std::string name, long int period_ns, int priority, int cpu_core)
       cpu_core(cpu_core)
 {
     // check if period_ns is positive
-    if (period_ns <= 0)
+    if (period_ns < 0)
     {
         throw std::invalid_argument("period_ns must be positive");
     }

@@ -1,3 +1,6 @@
+// Tests if tasks are running on different CPU cores.
+// Expected behavior: One task per core (check with ps).
+
 #include "task.h"
 #include "configure.h"
 #include <iostream>
