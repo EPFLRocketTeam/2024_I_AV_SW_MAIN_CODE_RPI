@@ -1,6 +1,6 @@
-set(SRC_DIR "${PROJECT_SOURCE_DIR}/src")
-file(GLOB SOURCES "${SRC_DIR}/*.cc")
-file(GLOB HEADERS "${SRC_DIR}/*.h")
-add_library(taskslib ${SOURCES} ${HEADERS})
-target_include_directories(taskslib PUBLIC ${SRC_DIR})
-target_link_libraries(taskslib pthread)
+# Define the main executable
+add_executable(rocket main.cc)
+
+# Link to the Cactus RT library
+# Add links for each integrations here
+target_link_libraries(rocket PRIVATE cactus_rt)
