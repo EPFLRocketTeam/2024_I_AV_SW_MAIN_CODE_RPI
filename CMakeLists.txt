@@ -10,5 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(ENABLE_TRACING OFF CACHE BOOL "Enable runtime tracing support" FORCE)
 add_subdirectory(cactus_rt)
 
-### Add subdirectories for other integrations here ##
+### Add subdirectories for integrations here ##
+add_subdirectory(control/drone_control)
+
+# Add the main executable
 add_subdirectory(src)
