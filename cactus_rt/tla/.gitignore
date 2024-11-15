@@ -1,0 +1,7 @@
+*.old
+**/*.toolbox/**
+!**/*.toolbox/*Model.launch
+
+states/
+*.dot
+*.out
