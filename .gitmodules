@@ -5,3 +5,6 @@
 	path = control
 	branch = avionics
 	url = https://github.com/EPFLRocketTeam/2024_I_GNC_C_ACT_EXP.git
+[submodule "guidance"]
+	path = guidance
+	url = https://github.com/EPFLRocketTeam/2024_I_GNC_G_MPC_PROTO.git
