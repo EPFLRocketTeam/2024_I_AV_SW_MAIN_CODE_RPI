@@ -1,3 +1,6 @@
 [submodule "control"]
 	path = control
 	url = https://github.com/EPFLRocketTeam/2024_I_GNC_C_ACT_EXP.git
+[submodule "cactus_rt"]
+	path = cactus_rt
+	url = https://github.com/EPFLRocketTeam/2024_I_AV_SW_RTLIB
