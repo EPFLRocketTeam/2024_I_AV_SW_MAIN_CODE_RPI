@@ -5,9 +5,7 @@ project(maincode)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# We disbale tracing from cactus_rt to avoid needing two install protobufs
-# This should be enaabled if tracing is needed
-set(ENABLE_TRACING OFF CACHE BOOL "Enable runtime tracing support" FORCE)
+# Add cactus_rt, a real-time library
 add_subdirectory(cactus_rt)
 
 ### Add subdirectories for integrations here ##
