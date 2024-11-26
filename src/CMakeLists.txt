@@ -1,13 +1,8 @@
 # Define the main executable
 
-set(HEADERS
-    control_interface.h
-)
+file(GLOB HEADERS "*.h")
 
-set(SOURCES
-    control_interface.cc
-    main.cc
-)
+file(GLOB SOURCES "*.cc")
 
 add_executable(rocket ${SOURCES} ${HEADERS})
 

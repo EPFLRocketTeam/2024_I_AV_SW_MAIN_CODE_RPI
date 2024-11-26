@@ -1,18 +1,28 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
+#include "shared_memory.h"
 #include "control_interface.h"
+#include "drone_interface.h"
 
 using cactus_rt::App;
 
 int main()
 {
+    struct GOD // Global Object Dictionary
+    {
+        SharedMemory<ControlOutput> control_memory;
+    };
+    GOD god;
+    god.control_memory.Write(ControlOutput{0, 0, 0, 0}); //WHat should the initial values be?
+
     // Sets up the signal handlers for SIGINT and SIGTERM (by default).
     cactus_rt::SetUpTerminationSignalHandler();
 
     // We first create cactus_rt App object.
     App app;
 
-    auto control_thread = app.CreateThread<ControlThread>();
+    auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
