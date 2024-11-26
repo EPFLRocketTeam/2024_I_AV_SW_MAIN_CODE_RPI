@@ -1,4 +1,8 @@
 # Icarus RPI main code
+> [!CAUTION]
+> This repository uses git submodules! To clone it, use the --recurse-submodules flag like so:
+> ```git clone --recurse-submodules https://github.com/EPFLRocketTeam/2024_I_AV_SW_MAIN_CODE_RPI.git```
+
 ## Introduction
 This project contains a task management library as well as main code running on the CM4 of the avionics of project Icarus. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
 
@@ -29,11 +33,16 @@ Then, you can connect to it using ssh:
 Here, `ert` is the RPI uname. You will be then be prompted for a password. This is the RPI password, `ERT123ert` in this case. You  should then be connected to the RPI.
 
 Additionally, here is the configuration of Daniel's RPI 3B+
-
 * WIFI uname: `ert`
 * WIFI pwd: `ERT123ert`
 * RPI  uname: `daniel`
 * RPI  pwd: `ert2024`
+
+And this is the configuration of the CM4:
+* WIFI uname: `ert`
+* WIFI pwd: `ERT123ert`
+* RPI  uname: `pi`
+* RPI  pwd: `raspberry`
 
 ### Copy files to the raspberry pi
 You can easily copy files to the RPI by using `rsync` from your computer:
