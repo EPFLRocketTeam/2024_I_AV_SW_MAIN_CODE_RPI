@@ -1,7 +1,4 @@
 # Icarus RPI main code
-> [!CAUTION]
-> This repository uses git submodules! To clone it, use the --recurse-submodules flag like so:
-> ```git clone --recurse-submodules https://github.com/EPFLRocketTeam/2024_I_AV_SW_MAIN_CODE_RPI.git```
 
 ## Introduction
 This project contains a task management library as well as main code running on the CM4 of the avionics of project Icarus. The program uses **CPU affinity** to bind tasks (threads) to specific cores and applies **real-time scheduling policies** to assign priorities to each task. It is specifically designed for systems running **Raspberry Pi OS with the PREEMPT_RT patch**, which supports real-time scheduling.
@@ -11,12 +8,19 @@ https://rocket-team.epfl.ch/en/icarus/avionics/software/2024_I_AV_SW_MAIN_CODE_R
 
 ## Installation
 > [!NOTE]  
-> This project should obviously be complied and run on a raspberry pi running Linux with the PREEMPT RT patchset. However, it still works to a certain extent on a regular Linux machine like Ubuntu.
+> This project i intended to be run on a raspberry pi running Linux with the PREEMPT RT patchset. However, it still works to a certain extent on a regular Linux machine like Ubuntu.
+
+### Cloning the repository
+> [!CAUTION]
+> This repository uses git submodules! To clone it, use the --recurse-submodules flag like so:
+> ```bash
+> git clone --recurse-submodules https://github.com/EPFLRocketTeam/2024_I_AV_SW_MAIN_CODE_RPI.git
+> ```
 
 ### Configuration of the raspberry pi
-TODO
+See https://rocket-team.epfl.ch/icarus/avionics/software/2025_I_AV_SW_RTLinux for instructions on  how to install Linux with the PREEMPT RT patch on a Raspberry Pi
 
-### Connect to the raspberry pi
+### Connection to the raspberry pi
 As of the 7.11.2024, the Raspberry Pi 4 of avionics is has this specific configuration:
 
 * WIFI uname: `ert`
@@ -44,34 +48,62 @@ And this is the configuration of the CM4:
 * RPI  uname: `pi`
 * RPI  pwd: `raspberry`
 
-### Copy files to the raspberry pi
-You can easily copy files to the RPI by using `rsync` from your computer:
+### Cross-compilation *(Recommended)*
+Cross-compilation means compiling the project on a machine different from the one on which it will run. This is useful when the target machine has different architecture or OS. In this case, the target machine is a Raspberry Pi 4 running Linux with the PREEMPT RT patch. This is the recommended way to compile the project. 
 
-    rsync * ert@pi.local: --exclude='/.git' --exclude='/build' -tvr
+#### Requirements
+The following packages are required to compile this project: `build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu`
+You can install them on your machine by running these commands:
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+```
 
-This will copy your current directory to the home directory of the RPI, assuming you are connected to the same network and the pi name is `ert`.
-
-### Requirements
-The following packages are required to compile this project: `build-essential cmake`
-
-You can install them by running these commands:
-
-    sudo apt update
-    sudo apt install -y build-essential cmake
-
-### Compilation
+#### Compilation
 From the root of the project, run the following commands:
+```bash
+mkdir build_cm4
+cd build_cm4
+cmake .. -DCROSS_COMPILE_CM4=ON
+make
+```
+This will compile the project for the Raspberry Pi 4. The resulting executable can be found in the build directory.
 
-    mkdir build
-    cd build
-    cmake ..
-    make
+#### Copying the executable to the Raspberry Pi
+You can easily copy files to the RPI by using `scp` from your computer:
+```bash
+scp build_cm4/src/rocket username@raspberrypi.local:
+```
+Replace `username` with the RPI username of the RPI you are using. See [Connection to the raspberry pi](#connection-to-the-raspberry-pi) for more information. This will copy the executable to the home directory on the RPI. You will be prompted for the password of the user `username` on the RPI.
+
+### Direct compilation
+If you intend to run the program on the same machine on which you are compiling it, you can compile it directly on the machine. 
+
+#### Requirements
+The packages `gcc-aarch64-linux-gnu` and `g++-aarch64-linux-gnu` are not needed in this case. The only packages required are the following: `build-essential cmake`
+You can install them on your machine by running these commands:
+```bash
+sudo apt update
+sudo apt install -y build-essential cmake
+```
+
+#### Compilation
+From the root of the project, run the following commands:
+```bash
+mkdir local_build
+cd local_build
+cmake ..
+make
+```
+The resulting executable can be found in `local_build/src/rocket`.
 
 ## Usage
 ### Main code
 The executable can be found in the build directory. It needs to be run with sudo in order to set scheduling policies:
-
-    sudo ./build/src/rocket
+```bash
+sudo ./build_dir/src/rocket
+```
+Replace `build_dir` with the name of the build directory you used. The program will start and run until it is stopped by the user.
 
 ## Debugging
 The `ps` utility can be use to list running threads and processes.
