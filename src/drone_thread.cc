@@ -1,4 +1,6 @@
-#include "drone_interface.h"
+// TODO: I think this file is not needed. I will remove it later.
+
+#include "drone_thread.h"
 #include <cactus_rt/rt.h>
 #include <iostream>
 
@@ -11,7 +13,7 @@ DriverThread::DriverThread(SharedMemory<ControlOutput> *control_memory) : Cyclic
 
 CyclicThread::LoopControl DriverThread::Loop(int64_t elapsed_ns) noexcept
 {
-    LOG_INFO(Logger(), "Shared memory: {}", control_memory->Read().thrust);
+    // LOG_INFO(Logger(), "Shared memory: {}", control_memory->Read().thrust);
 
     return LoopControl::Continue;
 }
