@@ -90,8 +90,8 @@ sudo apt install -y build-essential cmake
 #### Compilation
 From the root of the project, run the following commands:
 ```bash
-mkdir local_build
-cd local_build
+mkdir build_local
+cd build_local
 cmake ..
 make
 ```
