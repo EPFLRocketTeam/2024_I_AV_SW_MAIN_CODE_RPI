@@ -39,6 +39,7 @@ add_subdirectory(cactus_rt)
 
 ### Add subdirectories for integrations here ##
 add_subdirectory(control/drone_control)
+add_subdirectory(guidance/inc)
 
 # Add the main executable
 add_subdirectory(src)

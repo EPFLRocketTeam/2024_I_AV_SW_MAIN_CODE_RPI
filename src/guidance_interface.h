@@ -1,5 +1,5 @@
-#ifndef CONTROL_INTERFACE_H
-#define CONTROL_INTERFACE_H
+#ifndef GUIDANCE_INTERFACE_H
+#define GUIDANCE_INTERFACE_H
 
 #include <cactus_rt/rt.h>
 #include <guidance/inc/lv_guidance.h>
@@ -52,4 +52,4 @@ private:
 
 };
 
-#endif // CONTROL_INTERFACE_H
+#endif // GUIDANCE_INTERFACE_H

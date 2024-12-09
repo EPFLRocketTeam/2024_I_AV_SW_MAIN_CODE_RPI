@@ -3,6 +3,7 @@
 #include "shared_memory.h"
 #include "control_interface.h"
 #include "drone_interface.h"
+#include "guidance_interface.h"
 
 using cactus_rt::App;
 
@@ -23,7 +24,7 @@ int main()
 
     auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
     auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
-
+    auto guidance_thread = app.CreateThread<GuidanceThread>();
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
     app.Start();
