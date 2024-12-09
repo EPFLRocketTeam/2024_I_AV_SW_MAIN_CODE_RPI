@@ -1,2 +1,5 @@
 .vscode
 build
+build_cm4
+build_local
+local_build

@@ -38,6 +38,7 @@ project(maincode)
 add_subdirectory(cactus_rt)
 
 ### Add subdirectories for integrations here ##
+add_subdirectory(com_client)
 add_subdirectory(control/drone_control)
 add_subdirectory(guidance/inc)
 
