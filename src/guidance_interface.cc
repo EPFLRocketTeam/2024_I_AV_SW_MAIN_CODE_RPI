@@ -1,7 +1,7 @@
 #include "Vec3.h"
-#include <guidance/inc/lv_guidance.h>
+#include "lv_guidance.h"
 #include <cactus_rt/rt.h>
-#include <guidance_interface.h>
+#include "guidance_interface.h"
 #include <iostream>
 #include "model.h"
 

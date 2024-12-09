@@ -1,8 +1,8 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
 #include "shared_memory.h"
-#include "control_interface.h"
-#include "drone_interface.h"
+#include "control_thread.h"
+#include "drone_thread.h"
 #include "guidance_interface.h"
 
 using cactus_rt::App;
