@@ -46,6 +46,7 @@ private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
     LVGuidance rocket;           // LVGuidance instance
     Trajectory result;             // Trajectory to store results
+    Vector next_point;
     Vector current_state;          // Current state vector
     Vector target_state;           // Target state vector
     int num_vectors_to_compute;  // Number of vectors to compute in the trajectory

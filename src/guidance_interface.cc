@@ -11,18 +11,24 @@ CyclicThread::LoopControl GuidanceThread::Loop(int64_t elapsed_ns) noexcept
 {
     try{
         rocket.compute_ptr(current_state, target_state,ModelPointMass::FlightMode::Landing,num_vectors_to_compute);
+        if (!result.empty()) {
+         next_point=result[0];
+    } else {
+    // Handle the case where result is empty, if necessary
+    // For example, you could throw an exception or return a default value
+    throw std::runtime_error("compute_ptr returned an empty vector");
+    }
 
         // Log the computed trajectory
-        std::cout << "Computed trajectory:" << std::endl;
+        std::cout << "next point is" << std::endl;
 
-        int state_index = 0;
-        for (const auto& state : result) {
-            std::cout << "State " << state_index++ << ": { ";
-            for (double value : state) {
-                std::cout << value << " ";
+        
+            std::cout << ": { ";
+            for (double value : next_point) {
+                std::cout << value << ", ";
             }
             std::cout << "}" << std::endl;
-        }
+        
     }
     catch (std::exception& e){
         std::cerr << "Error in GuidanceInterface Loop: " << e.what() << '\n';
