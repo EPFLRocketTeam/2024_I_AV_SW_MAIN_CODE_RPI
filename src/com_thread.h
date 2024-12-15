@@ -7,7 +7,6 @@
 #include "DroneController.h"
 
 using cactus_rt::CyclicThread;
-typedef unsigned char byte;
 
 class ComThread : public CyclicThread
 {
@@ -20,9 +19,10 @@ protected:
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
     void ConfigureUart();
-    std::string EncodeControlData(ControlOutput &control_data, std::string &message);
-    void SendDataUnreliable(const byte *data, size_t data_size);
-    void SendDataWishfully(const std::string &message);
+    std::string EncodeControlData(ControlOutput &control_data);
+    void SendBytes(const char *data, size_t data_size);
+    ssize_t WriteUART(const char* data, const size_t data_size);
+
     void ReceiveData();
     void DecodeControlData(const std::string &message);
 
@@ -38,7 +38,7 @@ private:
     } control_modules;
 
     int uart_fd;
-    byte buffer[1024];
+    unsigned char buffer[1024];
     unsigned int buffer_size = 0;
 };
 

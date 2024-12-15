@@ -5,24 +5,27 @@
 #include <fcntl.h>   // File control
 #include <termios.h> // Terminal I/O
 
+// TODO: All of the UART stuff could be refactored into a separate class
+// TODO: Also, most threads are missing destructors
+// TODO: For example, we should close the file and free a pointer in the destructor of this class.
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
+constexpr char IDENTIFIER = 0x02;
 
 using cactus_rt::CyclicThread;
 
 ComThread::ComThread(SharedMemory<ControlOutput> *control_memory) : CyclicThread("ComThread", MakeConfig()), control_memory(control_memory)
 {
     ConfigureUart();
-    manager.set_module_configuration(0x02, {&control_modules.d1, &control_modules.d2, &control_modules.thrust, &control_modules.mz});
+    manager.set_module_configuration(IDENTIFIER, {&control_modules.d1, &control_modules.d2, &control_modules.thrust, &control_modules.mz});
 }
 
 CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
     ControlOutput control_data = control_memory->Read();
-    std::string message;
-    EncodeControlData(control_data, message);
-    SendDataWishfully(message);
-    LOG_INFO(Logger(), "Sent encoded message: {}", message);
+    std::string encoded_message = EncodeControlData(control_data);
+    SendBytes(encoded_message.c_str(), encoded_message.size());
+    LOG_INFO(Logger(), "Sent message: {}", encoded_message);
 
     return LoopControl::Continue;
 }
@@ -86,7 +89,7 @@ void ComThread::ConfigureUart()
     buffer_size = 0;
 }
 
-std::string ComThread::EncodeControlData(ControlOutput &control_data, std::string &message)
+std::string ComThread::EncodeControlData(ControlOutput &control_data)
 {
     control_modules.d1.set_value(control_data.d1);
     control_modules.d2.set_value(control_data.d2);
@@ -96,81 +99,61 @@ std::string ComThread::EncodeControlData(ControlOutput &control_data, std::strin
     const int length = 1 + 4 * 4; // 1 byte for module id, 4 bytes for each module
     char combined_buffer[length];
     std::string encoded_message;
-    manager.generate_combined_message(0x02, combined_buffer, encoded_message);
+    manager.generate_combined_message(IDENTIFIER, combined_buffer, encoded_message);
 
-    return encoded_message;
+    return encoded_message + '\n';
 }
 
-// TODO: This implementation by chagpt is partially incorrect.
-// TODO: It is weird and does not handle partial writes correctly.
-// TODO: Should be redone properly.
-void ComThread::SendDataUnreliable(const byte *data, size_t data_size)
+void ComThread::SendBytes(const char *data, size_t data_size)
 {
-    // Try sending the remaining data first (if any)
-    // if (buffer_size > 0)
-    // {
-    //     ssize_t bytes_written = write(uart_fd, buffer, buffer_size);
-    //     if (bytes_written == -1)
-    //     {
-    //         if (errno == EAGAIN)
-    //         {
-    //             LOG_WARNING(Logger(), "UART is blocking. Dropped packet. Baud rate is probably not high enough for the current thread frequency.");
-    //             return;
-    //         }
-    //         throw std::runtime_error("Failed to send data"); // Could be replaced with a warning
-    //     }
-
-    //     if (bytes_written != buffer_size)
-    //     {
-    //         // Could not send the entire data
-    //         LOG_WARNING(Logger(), "UART still full. Dropped packet. Baud rate is probably not high enough for the current thread frequency.");
-    //     }
-
-    //     // Move the remaining data forward in the buffer
-    //     buffer_size -= bytes_written;
-    //     if (buffer_size > 0)
-    //     {
-    //         std::memmove(buffer, buffer + bytes_written, buffer_size);
-    //     }
-    // }
-
-    // // If buffer is empty, try to send the new data
-    // if (buffer_size == 0 && data_size > 0)
-    // {
-    //     ssize_t bytes_written = write(uart_fd, data, data_size);
-    //     if (bytes_written == -1)
-    //     {
-    //         if (errno == EAGAIN)
-    //         {
-    //             // Could not send the entire data, store it in the buffer
-    //             size_t remaining_size = data_size;
-    //             if (remaining_size > buffer_size)
-    //                 remaining_size = buffer_size;
-    //             std::memcpy(buffer, data + bytes_written, remaining_size);
-    //             buffer_size = remaining_size;
-    //             return;
-    //         }
-    //         throw std::runtime_error("Failed to send data");
-    //     }
-    // }
+    // Try sending the remaining previous packet first (if any)
+    if (buffer_size > 0)
+    {
+        ssize_t bytes_written = WriteUART(data, data_size);
+        buffer_size -= bytes_written;
+        // This indicates a partial write, due to a full UART buffer
+        if (buffer_size > 0)
+        {
+            std::memmove(buffer, buffer + bytes_written, buffer_size);
+            LOG_WARNING(Logger(), "UART buffer is full. Dropped packet. Baud rate is probably not high enough for the current thread frequency.");
+            return;
+        }
+    }
+    // If buffer is empty, try to send the new data
+    if (data_size > 0)
+    {
+        ssize_t bytes_written = WriteUART(data, data_size);
+        // This indicates a partial write, due to a full UART buffer
+        if (bytes_written < data_size)
+        {
+            size_t remaining_size = data_size - bytes_written;
+            if (remaining_size > sizeof(buffer))
+            {
+                throw std::runtime_error("Packet too big for buffer");
+            }
+            std::memcpy(buffer, data + bytes_written, remaining_size);
+            buffer_size = remaining_size;
+        }
+    }
 }
 
-// This function is temporary but works perfectly fine for high enough baud rates.
-void ComThread::SendDataWishfully(const std::string &message)
+ssize_t ComThread::WriteUART(const char *data, const size_t data_size)
 {
-    ssize_t bytes_written = write(uart_fd, message.c_str(), message.size());
+    ssize_t bytes_written = write(uart_fd, data, data_size);
     if (bytes_written == -1)
     {
+        // This error means that the device is busy
         if (errno == EAGAIN)
-            throw std::runtime_error("UART buffer is full. Baud rate is probably not high enough for the current thread frequency.");
+        {
+            bytes_written = 0;
+        }
         else
+        {
+            // Could be replaced with a warning
             throw std::runtime_error("Failed to send data");
+        }
     }
-    if (bytes_written != static_cast<ssize_t>(message.size()))
-    {
-        // Could not send the entire data
-        LOG_WARNING(Logger(), "Could not send the entire data! Bytes written: {}, message size: {}", bytes_written, message.size());
-    }
+    return bytes_written;
 }
 
 void ComThread::DecodeControlData(const std::string &message)
