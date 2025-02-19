@@ -17,6 +17,9 @@ https://rocket-team.epfl.ch/en/icarus/avionics/software/2024_I_AV_SW_MAIN_CODE_R
 > git clone --recurse-submodules https://github.com/EPFLRocketTeam/2024_I_AV_SW_MAIN_CODE_RPI.git
 > ```
 
+### Installing casadi for GNC
+The GNC module uses the casadi library. To install it, follow the instructions here: https://github.com/ami-iit/ami-commons/blob/master/doc/casadi-ipopt-hsl.md
+
 ### Configuration of the raspberry pi
 See https://rocket-team.epfl.ch/icarus/avionics/software/2025_I_AV_SW_RTLinux for instructions on  how to install Linux with the PREEMPT RT patch on a Raspberry Pi
 
