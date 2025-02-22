@@ -5,6 +5,7 @@
 #include "Client.h"
 #include "shared_memory.h"
 #include "DroneController.h"
+#include "CM4UART.h"
 
 using cactus_rt::CyclicThread;
 
@@ -12,19 +13,17 @@ class ComThread : public CyclicThread
 {
 public:
     ComThread(SharedMemory<ControlOutput> *control_memory);
+    ~ComThread();
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
 
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
-    void ConfigureUart();
     std::string EncodeControlData(ControlOutput &control_data);
-    void SendBytes(const char *data, size_t data_size);
-    ssize_t WriteUART(const char* data, const size_t data_size);
 
-    void ReceiveData();
-    void DecodeControlData(const std::string &message);
+    // void ReceiveData();
+    // void DecodeControlData(const std::string &message);
 
     SharedMemory<ControlOutput> *control_memory;
 
@@ -37,9 +36,7 @@ private:
         OneFloatModule mz;
     } control_modules;
 
-    int uart_fd;
-    unsigned char buffer[1024];
-    unsigned int buffer_size = 0;
+    CM4UART *uart;
 };
 
 #endif // COM_THREAD_H
