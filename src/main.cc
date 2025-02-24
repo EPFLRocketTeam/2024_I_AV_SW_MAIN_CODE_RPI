@@ -2,8 +2,6 @@
 #include <iostream>
 #include "shared_memory.h"
 #include "control_thread.h"
-#include "drone_thread.h"
-#include "guidance_interface.h"
 
 using cactus_rt::App;
 
@@ -14,7 +12,7 @@ int main()
         SharedMemory<ControlOutput> control_memory;
     };
     GOD god;
-    god.control_memory.Write(ControlOutput{0, 0, 0, 0}); //WHat should the initial values be?
+    god.control_memory.Write(ControlOutput{0, 0, 0, 0}); 
 
     // Sets up the signal handlers for SIGINT and SIGTERM (by default).
     cactus_rt::SetUpTerminationSignalHandler();
@@ -23,8 +21,7 @@ int main()
     App app;
 
     auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
-    auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
-    auto guidance_thread = app.CreateThread<GuidanceThread>();
+
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
     app.Start();
