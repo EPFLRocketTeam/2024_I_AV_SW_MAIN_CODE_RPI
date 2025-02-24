@@ -2,6 +2,7 @@
 #include <iostream>
 #include "shared_memory.h"
 #include "control_thread.h"
+#include "com_thread.h"
 
 using cactus_rt::App;
 
@@ -20,7 +21,8 @@ int main()
     // We first create cactus_rt App object.
     App app;
 
-    auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    // auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    auto com_thread = app.CreateThread<ComThread>(&god.control_memory);
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.

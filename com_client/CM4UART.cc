@@ -4,12 +4,18 @@
 #include <termios.h> // Terminal I/O
 #include <stdexcept> // For runtime_error
 #include <cstring>   // For memset
+#include "quill/Quill.h" // For Logger
 
 #include <iostream>
 using namespace std;
 
-CM4UART::CM4UART(const int baudrate, const char *device) : UART(baudrate, device)
+CM4UART::CM4UART(const int baudrate, const char *device, quill::Logger* logger) : UART(baudrate, device)
 {
+    this->logger = logger;
+
+    // FIXME: The message is not logged
+    LOG_ERROR(logger, "Setting up UART");
+
     // Open UART device, in read-write, non-blocking mode.
     // NOCTTY means that the device is not the controlling terminal for the process.
     uart_fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -19,7 +25,7 @@ CM4UART::CM4UART(const int baudrate, const char *device) : UART(baudrate, device
     }
 
     struct termios tty;
-    // memset(&tty, 0, sizeof tty);
+    memset(&tty, 0, sizeof tty);
 
     if (tcgetattr(uart_fd, &tty) != 0)
     {
@@ -48,6 +54,8 @@ CM4UART::CM4UART(const int baudrate, const char *device) : UART(baudrate, device
         close(uart_fd);
         throw std::runtime_error("Failed to set UART attributes.");
     }
+
+    LOG_INFO(logger, "UART set up successfully");
 }
 
 CM4UART::~CM4UART()
@@ -67,8 +75,8 @@ size_t CM4UART::transmit(const unsigned char *data, const size_t data_size)
         }
         else
         {
-            // Could be replaced with a warning
-            throw std::runtime_error("Failed to transmit data");
+            // throw std::runtime_error("Failed to transmit data");
+            LOG_INFO(logger, "Failed to transmit data");
         }
     }
     return bytes_written;
@@ -86,8 +94,8 @@ size_t CM4UART::receive(unsigned char *data, const size_t data_size)
         }
         else
         {
-            // Could be replaced with a warning
-            throw std::runtime_error("Failed to receive data");
+            // throw std::runtime_error("Failed to receive data");
+            LOG_WARNING(logger, "Failed to receive data");
         }
     }
     return bytes_read;

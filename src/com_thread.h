@@ -5,6 +5,7 @@
 #include "Client.h"
 #include "shared_memory.h"
 #include "DroneController.h"
+#include "CM4UART.h"
 
 using cactus_rt::CyclicThread;
 typedef unsigned char byte;
@@ -19,14 +20,12 @@ protected:
 
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
-    void ConfigureUart();
     std::string EncodeControlData(ControlOutput &control_data, std::string &message);
-    void SendDataUnreliable(const byte *data, size_t data_size);
-    void SendDataWishfully(const std::string &message);
-    void ReceiveData();
     void DecodeControlData(const std::string &message);
 
     SharedMemory<ControlOutput> *control_memory;
+
+    CM4UART *uart_manager;
 
     Manager manager;
     struct ControlModules
@@ -36,10 +35,6 @@ private:
         OneFloatModule thrust;
         OneFloatModule mz;
     } control_modules;
-
-    int uart_fd;
-    byte buffer[1024];
-    unsigned int buffer_size = 0;
 };
 
 #endif // COM_THREAD_H
