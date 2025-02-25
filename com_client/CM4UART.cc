@@ -13,15 +13,12 @@ CM4UART::CM4UART(const int baudrate, const char *device, quill::Logger* logger) 
 {
     this->logger = logger;
 
-    // FIXME: The message is not logged
-    LOG_ERROR(logger, "Setting up UART");
-
     // Open UART device, in read-write, non-blocking mode.
     // NOCTTY means that the device is not the controlling terminal for the process.
     uart_fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (uart_fd < 0)
     {
-        throw std::runtime_error(std::string("Failed to open UART device: ") + device);
+        throw std::runtime_error(std::string("Failed to open UART device ") + device);
     }
 
     struct termios tty;

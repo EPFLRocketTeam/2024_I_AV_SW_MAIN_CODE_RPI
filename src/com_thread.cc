@@ -5,6 +5,9 @@
 #include <fcntl.h>   // File control
 #include <termios.h> // Terminal I/O
 
+#include <iostream>
+using namespace std;
+
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
 
@@ -18,13 +21,13 @@ ComThread::ComThread(SharedMemory<ControlOutput> *control_memory) : CyclicThread
 
 CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
-    ControlOutput control_data = control_memory->Read();
-    std::string message;
-    EncodeControlData(control_data, message);
+    // ControlOutput control_data = control_memory->Read();
+    // std::string message;
+    // EncodeControlData(control_data, message);
 
     // TODO: Use uart_manager to transmit the message
 
-    LOG_INFO(Logger(), "Sent encoded message: {}", message);
+    // LOG_INFO(Logger(), "Sent encoded message");
 
     return LoopControl::Continue;
 }

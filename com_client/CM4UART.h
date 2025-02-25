@@ -2,7 +2,7 @@
 #define CM4_UART_H
 
 #include "UART.h"
-#include "quill/Logger.h"
+#include "quill/Quill.h" // For Logger
 
 class CM4UART : public UART
 {

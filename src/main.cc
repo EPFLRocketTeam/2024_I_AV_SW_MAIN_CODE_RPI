@@ -3,47 +3,68 @@
 #include "shared_memory.h"
 #include "control_thread.h"
 #include "com_thread.h"
+#include "quill/Quill.h" // For Logger
 
 using cactus_rt::App;
 
 int main()
 {
-    struct GOD // Global Object Dictionary
+    // Cactus_rt app and logging configuration
+    cactus_rt::AppConfig app_config;
+    // Enable strict timestamp order - this will be slower, but logs will always appear in order
+    app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
+    // Set the background logging thread CPU affinity
+    // app_config.logger_config.backend_thread_cpu_affinity = 1;
+    // Further logger configuration can be done here
+    // See https://quillcpp.readthedocs.io/en/latest/quick_start.html#logging-to-file
+    // for more information on how to log to a file
+
+    // Create the cactus_rt application
+    App app("MainCodeRpi", app_config);
+    
+    // Main thread logger
+    auto main_logger = quill::create_logger("MainThread");
+    LOG_INFO(main_logger, "Main thread started");
+
+    // Sets up the signal handlers for SIGINT and SIGTERM
+    cactus_rt::SetUpTerminationSignalHandler();
+
+    // Global Object Dictionary
+    struct GOD
     {
         SharedMemory<ControlOutput> control_memory;
     };
     GOD god;
-    god.control_memory.Write(ControlOutput{0, 0, 0, 0}); 
+    god.control_memory.Write(ControlOutput{0, 0, 0, 0});
 
-    // Sets up the signal handlers for SIGINT and SIGTERM (by default).
-    cactus_rt::SetUpTerminationSignalHandler();
+    // UART Communication Thread
+    std::shared_ptr<ComThread> com_thread;
+    try
+    {
+        com_thread = app.CreateThread<ComThread>(&god.control_memory);
+    }
+    catch (std::exception &e)
+    {
+        LOG_ERROR(main_logger, "Failed to create ComThread: {}", e.what());
+        LOG_CRITICAL(main_logger, "Startup failure");
+        std::exit(1);
+    }
 
-    // We first create cactus_rt App object.
-    App app;
-
+    // Control Thread
     // auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
-    auto com_thread = app.CreateThread<ComThread>(&god.control_memory);
 
-    // Start the application, which starts all the registered threads (any thread
-    // passed to App::RegisterThread) in the order they are registered.
+    // Start the application, which starts all the registered threads
     app.Start();
-
-    std::cout << "Rocket started\n";
+    LOG_INFO(main_logger, "Started threads");
 
     // This function blocks until SIGINT or SIGTERM are received.
     cactus_rt::WaitForAndHandleTerminationSignal();
 
-    std::cout << "Caught signal, requesting stop...\n";
-
-    // We ask the application to stop, which stops all threads in the order they
-    // are created. If you want the application to run indefinitely, remove this
-    // line.
+    // Stop the application
+    LOG_INFO(main_logger, "Stopping threads");
     app.RequestStop();
-
-    // We wait until all threads registered are done here.
     app.Join();
 
-    std::cout << "Done\n";
-
+    LOG_INFO(main_logger, "Main thread stopped");
     return 0;
 }
