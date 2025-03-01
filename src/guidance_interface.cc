@@ -9,32 +9,15 @@ using cactus_rt::CyclicThread;
 
 CyclicThread::LoopControl GuidanceThread::Loop(int64_t elapsed_ns) noexcept
 {
-    try{
-        rocket.compute_ptr(current_state, target_state,ModelPointMass::FlightMode::Landing,num_vectors_to_compute);
-        if (!result.empty()) {
-         next_point=result[0];
-    } else {
-    // Handle the case where result is empty, if necessary
-    // For example, you could throw an exception or return a default value
-    throw std::runtime_error("compute_ptr returned an empty vector");
-    }
-
-        // Log the computed trajectory
-        std::cout << "next point is" << std::endl;
-
-        
-            std::cout << ": { ";
-            for (double value : next_point) {
-                std::cout << value << ", ";
-            }
-            std::cout << "}" << std::endl;
-        
-    }
-    catch (std::exception& e){
-        std::cerr << "Error in GuidanceInterface Loop: " << e.what() << '\n';
-        return LoopControl::Stop;
-    }
-
+    // Read the current and target state of the drone
+    std::vector current_state = current_state_memory->Read();
+    std::vector target_state = waypoint_state_memory->Read();
+    
+    // Copmute and write guidance output
+    // TODO: implement flight mode 
+    std::vector guidance_output = rocket->compute(current_state, target_state, 0); // using default method, 1 vector outputed TODO
+    guidance_output_memory->Write(guidance_output);
+    
     return LoopControl::Continue;
 }
 
