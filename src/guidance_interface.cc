@@ -7,15 +7,24 @@
 
 using cactus_rt::CyclicThread;
 
+GuidanceThread::GuidanceThread( SharedMemory<std::vector<double>>* current_state_memory, 
+                                SharedMemory<std::vector<double>>* waypoint_state_memory, 
+                                SharedMemory<std::vector<double>>* guidance_output_memory)
+: CyclicThread("GuidanceThread", MakeConfig()), rocket(nullptr, new ModelPointMass(), true),
+  current_state_memory(current_state_memory), waypoint_state_memory(waypoint_state_memory), guidance_output_memory(guidance_output_memory)
+{
+    
+}
+
 CyclicThread::LoopControl GuidanceThread::Loop(int64_t elapsed_ns) noexcept
 {
     // Read the current and target state of the drone
-    std::vector current_state = current_state_memory->Read();
-    std::vector target_state = waypoint_state_memory->Read();
+    std::vector<double> current_state = current_state_memory->Read();
+    std::vector<double> target_state = waypoint_state_memory->Read();
     
     // Copmute and write guidance output
     // TODO: implement flight mode 
-    std::vector guidance_output = rocket->compute(current_state, target_state, 0); // using default method, 1 vector outputed TODO
+    std::vector<double> guidance_output = rocket.compute(current_state, target_state, 0)[0]; // using default method, 1 vector outputed TODO
     guidance_output_memory->Write(guidance_output);
     
     return LoopControl::Continue;

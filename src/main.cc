@@ -15,9 +15,9 @@ int main()
         SharedMemory<ControlOutput> control_memory;
 
         // Guidance
-        SharedMemory<std::vector> current_state_memory; // current state of the drone (9)
-        SharedMemory<std::vector> waypoint_state_memory; // desired state (waypoint) of the drone (9)
-        SharedMemory<std::vector> guidance_output_memory; // output of the guidance system (9)
+        SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
+        SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
+        SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
     };
     GOD god;
     god.control_memory.Write(ControlOutput{0, 0, 0, 0}); //WHat should the initial values be?
@@ -28,19 +28,27 @@ int main()
     // We first create cactus_rt App object.
     App app;
 
+    std::cout << "Creating threads...\n";
+    
     auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    std::cout << "\t>Control thread created\n";
+
     auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
+    std::cout << "\t>Driver thread created\n";
+
     auto guidance_thread = app.CreateThread<GuidanceThread>(&god.current_state_memory, 
                                                             &god.waypoint_state_memory, 
                                                             &god.guidance_output_memory);
+    std::cout << "\t>Guidance thread created\n";
+
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
-    app.Start();
+    app.Start(); // NOTE: run in sudo !
 
     std::cout << "Rocket started\n";
 
     // This function blocks until SIGINT or SIGTERM are received.
-    cactus_rt::WaitForAndHandleTerminationSignal();
+    // cactus_rt::WaitForAndHandleTerminationSignal();
 
     std::cout << "Caught signal, requesting stop...\n";
 
