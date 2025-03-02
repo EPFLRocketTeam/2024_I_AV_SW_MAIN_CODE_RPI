@@ -2,7 +2,7 @@
 #define GUIDANCE_INTERFACE_H
 
 #include <cactus_rt/rt.h>
-// #include "cyclic_thread_state_dependant.h"
+#include "cyclic_thread_state_dependant.h"
 #include "lv_guidance.h"
 #include "model.h"
 #include "shared_memory.h"
