@@ -8,23 +8,32 @@
 
 using cactus_rt::App;
 
+struct GOD // Global Object Dictionary
+{
+    // Control
+    SharedMemory<ControlOutput> control_memory;
+
+    // Guidance
+    SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
+    SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
+    SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
+
+    // FMS
+    SharedMemory<FSMStates> fsm_state_memory;
+
+    // Constructor
+    GOD() { 
+        control_memory.Write(ControlOutput{0, 0, 0, 0}); //What should the initial values be?
+        fsm_state_memory.Write(FSMStates::AUTOMATIC_FLIGHT);
+        current_state_memory.Write(std::vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
+        waypoint_state_memory.Write(std::vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
+    }
+};
+
+
 int main()
 {
-    struct GOD // Global Object Dictionary
-    {
-        // Control
-        SharedMemory<ControlOutput> control_memory;
-
-        // Guidance
-        SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
-        SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
-        SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
-
-        // FMS
-        SharedMemory<FSMStates> fsm_state_memory;
-    };
-    GOD god;
-    god.control_memory.Write(ControlOutput{0, 0, 0, 0}); //WHat should the initial values be?
+    GOD god; // initialise the global object dictionary
 
     // Sets up the signal handlers for SIGINT and SIGTERM (by default).
     cactus_rt::SetUpTerminationSignalHandler();
@@ -34,16 +43,16 @@ int main()
 
     std::cout << "Creating threads...\n";
     
-    auto control_thread = app.CreateThread<ControlThread>(&god.control_memory, true);
+    // auto control_thread = app.CreateThread<ControlThread>(&god.control_memory, true);
     std::cout << "\t>Control thread created\n";
 
-    auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
+    // auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
     std::cout << "\t>Driver thread created\n";
 
-    // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
-    //                                                         &god.current_state_memory, 
-    //                                                         &god.waypoint_state_memory, 
-    //                                                         &god.guidance_output_memory);
+    auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
+                                                            &god.current_state_memory, 
+                                                            &god.waypoint_state_memory, 
+                                                            &god.guidance_output_memory, true);
     std::cout << "\t>Guidance thread created\n";
 
     // Start the application, which starts all the registered threads (any thread
@@ -54,7 +63,7 @@ int main()
 
     // This function blocks until SIGINT or SIGTERM are received.
     // cactus_rt::WaitForAndHandleTerminationSignal();
-    std::this_thread::sleep_for(std::chrono::seconds(10)); // simulates waiting for the signal
+    std::this_thread::sleep_for(std::chrono::seconds(1)); // simulates waiting for the signal
 
     std::cout << "Caught signal, requesting stop...\n";
 

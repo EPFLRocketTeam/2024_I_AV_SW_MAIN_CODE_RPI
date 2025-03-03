@@ -18,7 +18,8 @@ public:
     GuidanceThread( SharedMemory<FSMStates>*,
                     SharedMemory<std::vector<double>>*, 
                     SharedMemory<std::vector<double>>*, 
-                    SharedMemory<std::vector<double>>*);
+                    SharedMemory<std::vector<double>>*,
+                    bool = false);
 
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
@@ -28,6 +29,8 @@ private:
     SharedMemory<std::vector<double>>* guidance_output_memory; // output of the guidance system (9)
 
     LoopControl run(int64_t) noexcept;
+
+    bool debug;
 };
 
 #endif // GUIDANCE_INTERFACE_H

@@ -10,9 +10,7 @@ LogInterface::LogInterface(const std::string& log_file_path, SharedMemory<Contro
 }
 
 LogInterface::~LogInterface() {
-    if (log_file.is_open()) {
-        log_file.close();
-    }
+    if (log_file.is_open()) log_file.close();
 }
 
 void LogInterface::LogData() {

@@ -9,6 +9,7 @@ using cactus_rt::CyclicThread;
 ControlThread::ControlThread(SharedMemory<ControlOutput> *control_memory, bool debug) : CyclicThread("ControlThread", MakeConfig()), control_memory(control_memory), debug(debug)
 {
     controller.reset();
+    if (debug) std::cout << "ControlThread created\n";
 }
 
 CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept

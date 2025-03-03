@@ -1,6 +1,8 @@
 #ifndef CONTROL_THREAD_H
 #define CONTROL_THREAD_H
 
+#pragma once
+
 #include <cactus_rt/rt.h>
 #include "DroneController.h"
 #include "shared_memory.h"
@@ -10,7 +12,7 @@ using cactus_rt::CyclicThread;
 class ControlThread : public CyclicThread
 {
 public:
-    ControlThread(SharedMemory<ControlOutput> *control_memory, bool = true);
+    ControlThread(SharedMemory<ControlOutput> *control_memory, bool = false);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
