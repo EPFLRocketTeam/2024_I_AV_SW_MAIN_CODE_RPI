@@ -4,6 +4,7 @@
 #include "control_thread.h"
 #include "drone_thread.h"
 #include "guidance_interface.h"
+#include "fsm_states.h"
 
 using cactus_rt::App;
 
@@ -18,6 +19,9 @@ int main()
         SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
         SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
         SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
+
+        // FMS
+        SharedMemory<FSMStates> fsm_state_memory;
     };
     GOD god;
     god.control_memory.Write(ControlOutput{0, 0, 0, 0}); //WHat should the initial values be?
@@ -36,7 +40,8 @@ int main()
     auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
     std::cout << "\t>Driver thread created\n";
 
-    auto guidance_thread = app.CreateThread<GuidanceThread>(&god.current_state_memory, 
+    auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
+                                                            &god.current_state_memory, 
                                                             &god.waypoint_state_memory, 
                                                             &god.guidance_output_memory);
     std::cout << "\t>Guidance thread created\n";

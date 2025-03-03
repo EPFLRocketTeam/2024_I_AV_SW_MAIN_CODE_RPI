@@ -7,16 +7,19 @@
 
 using cactus_rt::CyclicThread;
 
-GuidanceThread::GuidanceThread( SharedMemory<std::vector<double>>* current_state_memory, 
+GuidanceThread::GuidanceThread( SharedMemory<FSMStates>* fsm_state_memory,
+                                SharedMemory<std::vector<double>>* current_state_memory, 
                                 SharedMemory<std::vector<double>>* waypoint_state_memory, 
                                 SharedMemory<std::vector<double>>* guidance_output_memory)
-: CyclicThread("GuidanceThread", MakeConfig()), rocket(nullptr, new ModelPointMass(), true),
+: CyclicThreadStateDependant(fsm_state_memory, "GuidanceThread", MakeConfig()), rocket(nullptr, new ModelPointMass(), true),
   current_state_memory(current_state_memory), waypoint_state_memory(waypoint_state_memory), guidance_output_memory(guidance_output_memory)
 {
-    
+    // define the function to run for each state 
+    // std::bind is used to bind the method to the current instance of the class
+    stateDependentFunctions[FSMStates::AUTOMATIC_FLIGHT] = std::bind(&GuidanceThread::run, this, std::placeholders::_1);
 }
 
-CyclicThread::LoopControl GuidanceThread::Loop(int64_t elapsed_ns) noexcept
+CyclicThread::LoopControl GuidanceThread::run(int64_t elapsed_ns) noexcept
 {
     // Read the current and target state of the drone
     std::vector<double> current_state = current_state_memory->Read();
