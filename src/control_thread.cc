@@ -6,7 +6,7 @@
 
 using cactus_rt::CyclicThread;
 
-ControlThread::ControlThread(SharedMemory<ControlOutput> *control_memory) : CyclicThread("ControlThread", MakeConfig()), control_memory(control_memory)
+ControlThread::ControlThread(SharedMemory<ControlOutput> *control_memory, bool debug) : CyclicThread("ControlThread", MakeConfig()), control_memory(control_memory), debug(debug)
 {
     controller.reset();
 }
@@ -17,6 +17,8 @@ CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
     // LOG_INFO(Logger(), "Output: d1: {}, d2: {}, thrust: {}, mz: {}", output.d1, output.d2, output.thrust, output.mz);
 
     control_memory->Write(output);
+
+    if (debug) std::cout << "ControlThread @ " << elapsed_ns << std::endl;
 
     return LoopControl::Continue;
 }

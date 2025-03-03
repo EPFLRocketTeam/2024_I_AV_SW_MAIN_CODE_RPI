@@ -34,16 +34,16 @@ int main()
 
     std::cout << "Creating threads...\n";
     
-    auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    auto control_thread = app.CreateThread<ControlThread>(&god.control_memory, true);
     std::cout << "\t>Control thread created\n";
 
     auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
     std::cout << "\t>Driver thread created\n";
 
-    auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
-                                                            &god.current_state_memory, 
-                                                            &god.waypoint_state_memory, 
-                                                            &god.guidance_output_memory);
+    // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
+    //                                                         &god.current_state_memory, 
+    //                                                         &god.waypoint_state_memory, 
+    //                                                         &god.guidance_output_memory);
     std::cout << "\t>Guidance thread created\n";
 
     // Start the application, which starts all the registered threads (any thread
@@ -54,8 +54,10 @@ int main()
 
     // This function blocks until SIGINT or SIGTERM are received.
     // cactus_rt::WaitForAndHandleTerminationSignal();
+    std::this_thread::sleep_for(std::chrono::seconds(10)); // simulates waiting for the signal
 
     std::cout << "Caught signal, requesting stop...\n";
+
 
     // We ask the application to stop, which stops all threads in the order they
     // are created. If you want the application to run indefinitely, remove this

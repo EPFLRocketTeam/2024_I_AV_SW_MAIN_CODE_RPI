@@ -10,7 +10,7 @@ using cactus_rt::CyclicThread;
 class ControlThread : public CyclicThread
 {
 public:
-    ControlThread(SharedMemory<ControlOutput> *control_memory);
+    ControlThread(SharedMemory<ControlOutput> *control_memory, bool = true);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
@@ -19,6 +19,7 @@ private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
     Controller controller = DRONE_CONTROLLER;
     SharedMemory<ControlOutput>* control_memory;
+    bool debug;
 };
 
 #endif // CONTROL_THREAD_H
