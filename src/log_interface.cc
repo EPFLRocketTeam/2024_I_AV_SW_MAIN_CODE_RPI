@@ -2,6 +2,7 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
 
+
 LogInterface::LogInterface(const std::string& log_file_path, SharedMemory<ControlOutput>* shared_memory)
     : log_file_path(log_file_path), log_file(log_file_path, std::ios::out | std::ios::app), shared_memory(shared_memory) {
     if (!log_file.is_open()) {

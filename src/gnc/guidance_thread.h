@@ -1,7 +1,5 @@
-#pragma once
-
-#ifndef GUIDANCE_INTERFACE_H
-#define GUIDANCE_INTERFACE_H
+#ifndef GUIDANCE_THREAD_H
+#define GUIDANCE_THREAD_H
 
 #include <cactus_rt/rt.h>
 #include "cyclic_thread_state_dependant.h"
@@ -9,8 +7,6 @@
 #include "fsm_states.h"
 #include "model.h"
 #include "shared_memory.h"
-
-using cactus_rt::CyclicThread;
 
 class GuidanceThread : public CyclicThreadStateDependant
 {
@@ -33,4 +29,4 @@ private:
     bool debug;
 };
 
-#endif // GUIDANCE_INTERFACE_H
+#endif // GUIDANCE_THREAD_H

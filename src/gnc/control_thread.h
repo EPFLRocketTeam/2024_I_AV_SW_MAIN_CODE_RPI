@@ -1,27 +1,25 @@
 #ifndef CONTROL_THREAD_H
 #define CONTROL_THREAD_H
 
-#pragma once
-
 #include <cactus_rt/rt.h>
 #include "DroneController.h"
 #include "shared_memory.h"
+#include "cyclic_thread_state_dependant.h"
 
-using cactus_rt::CyclicThread;
-
-class ControlThread : public CyclicThread
+class ControlThread : public CyclicThreadStateDependant
 {
 public:
-    ControlThread(SharedMemory<ControlOutput> *control_memory, bool = false);
-
-protected:
-    LoopControl Loop(int64_t elapsed_ns) noexcept final;
+    ControlThread(  SharedMemory<FSMStates>*,
+                    SharedMemory<ControlOutput>*, 
+                    bool = false);
 
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
     Controller controller = DRONE_CONTROLLER;
     SharedMemory<ControlOutput>* control_memory;
     bool debug;
+
+    LoopControl run(int64_t elapsed_ns) noexcept;
 };
 
 #endif // CONTROL_THREAD_H

@@ -1,10 +1,13 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
 #include "shared_memory.h"
-#include "control_thread.h"
-#include "drone_thread.h"
-#include "guidance_interface.h"
 #include "fsm_states.h"
+
+#include "fsm_thread.h"
+#include "drone_thread.h"
+#include "control_thread.h"
+#include "guidance_thread.h"
+#include "navigation_thread.h"
 
 using cactus_rt::App;
 
@@ -24,9 +27,9 @@ struct GOD // Global Object Dictionary
     // Constructor
     GOD() { 
         control_memory.Write(ControlOutput{0, 0, 0, 0}); //What should the initial values be?
-        fsm_state_memory.Write(FSMStates::AUTOMATIC_FLIGHT);
+        fsm_state_memory.Write(FSMStates::IDLE);
         current_state_memory.Write(std::vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
-        waypoint_state_memory.Write(std::vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
+        waypoint_state_memory.Write(std::vector<double>{0, 0, 2, 0, 0, 0, 0, 0, 0});
     }
 };
 
@@ -43,17 +46,19 @@ int main()
 
     std::cout << "Creating threads...\n";
     
-    // auto control_thread = app.CreateThread<ControlThread>(&god.control_memory, true);
-    std::cout << "\t>Control thread created\n";
-
-    // auto driver_thread = app.CreateThread<DriverThread>(&god.control_memory);
-    std::cout << "\t>Driver thread created\n";
+    auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
+                                                            &god.control_memory, true);
 
     auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
                                                             &god.current_state_memory, 
                                                             &god.waypoint_state_memory, 
                                                             &god.guidance_output_memory, true);
-    std::cout << "\t>Guidance thread created\n";
+
+    auto navigation_thread = app.CreateThread<NavigationThread>(&god.fsm_state_memory,
+                                                                &god.current_state_memory, 
+                                                                true);
+
+    auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
@@ -63,7 +68,7 @@ int main()
 
     // This function blocks until SIGINT or SIGTERM are received.
     // cactus_rt::WaitForAndHandleTerminationSignal();
-    std::this_thread::sleep_for(std::chrono::seconds(1)); // simulates waiting for the signal
+    std::this_thread::sleep_for(std::chrono::seconds(10)); // simulates waiting for the signal
 
     std::cout << "Caught signal, requesting stop...\n";
 

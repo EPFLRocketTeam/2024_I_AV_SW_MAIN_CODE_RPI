@@ -1,7 +1,7 @@
 #include "Vec3.h"
 #include "lv_guidance.h"
 #include <cactus_rt/rt.h>
-#include "guidance_interface.h"
+#include "guidance_thread.h"
 #include <iostream>
 #include "model.h"
 
@@ -12,16 +12,14 @@ GuidanceThread::GuidanceThread( SharedMemory<FSMStates>* fsm_state_memory,
                                 SharedMemory<std::vector<double>>* waypoint_state_memory, 
                                 SharedMemory<std::vector<double>>* guidance_output_memory,
                                 bool debug)
-: CyclicThreadStateDependant(fsm_state_memory, "GuidanceThread", MakeConfig()), rocket(nullptr, new ModelPointMass(), true),
+: CyclicThreadStateDependant(fsm_state_memory, "GuidanceThread", MakeConfig(), debug), rocket(nullptr, new ModelPointMass(), false),
   current_state_memory(current_state_memory), waypoint_state_memory(waypoint_state_memory), guidance_output_memory(guidance_output_memory),
   debug(debug)
 {
-    std::cout << "Guindnace thread created\n";
-    // define the function to run for each state 
-    // std::bind is used to bind the method to the current instance of the class
+    // define the function to run for each state (std::bind is used to bind the method to the current instance of the class)
     stateDependentFunctions[FSMStates::AUTOMATIC_FLIGHT] = std::bind(&GuidanceThread::run, this, std::placeholders::_1);
 
-    if (debug) std::cout << "GuidanceThread created\n";
+    if (debug) std::cout << "\t>GuidanceThread created\n";
 }
 
 CyclicThread::LoopControl GuidanceThread::run(int64_t elapsed_ns) noexcept
@@ -42,7 +40,7 @@ CyclicThread::LoopControl GuidanceThread::run(int64_t elapsed_ns) noexcept
     // std::vector<double> guidance_output = rocket.compute(current_state, target_state)[0]; // using default method, 1 vector outputed TODO
     // guidance_output_memory->Write(guidance_output);
 
-    if (debug) std::cout << "GuidanceThread @ " << elapsed_ns << std::endl;
+    if (debug) std::cout << "\t>GuidanceThread @ " << elapsed_ns << std::endl;
     
     return LoopControl::Continue;
 }
@@ -51,8 +49,8 @@ cactus_rt::CyclicThreadConfig GuidanceThread::MakeConfig()
 {
     cactus_rt::CyclicThreadConfig config;
 
-    // Run at 200 Hz.
-    config.period_ns = 80'000'000;
+    // Run at 1 Hz.
+    config.period_ns = 1'000'000'000;
 
     // Pin this thread on CPU core #2
     config.cpu_affinity = std::vector<size_t>{3};
