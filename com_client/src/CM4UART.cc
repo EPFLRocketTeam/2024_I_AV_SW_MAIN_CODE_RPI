@@ -60,7 +60,7 @@ CM4UART::~CM4UART()
     close(uart_fd);
 }
 
-size_t CM4UART::transmit(const unsigned char *data, const size_t data_size)
+size_t CM4UART::send(const unsigned char *data, const size_t data_size)
 {
     ssize_t bytes_written = write(uart_fd, data, data_size);
     if (bytes_written == -1)
@@ -72,8 +72,8 @@ size_t CM4UART::transmit(const unsigned char *data, const size_t data_size)
         }
         else
         {
-            // throw std::runtime_error("Failed to transmit data");
-            LOG_INFO(logger, "Failed to transmit data");
+            // throw std::runtime_error("Failed to send data");
+            LOG_INFO(logger, "Failed to send data");
         }
     }
     return bytes_written;

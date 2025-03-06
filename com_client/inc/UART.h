@@ -28,7 +28,7 @@ protected:
 
     // Tries to write the data to the UART device, without blocking.
     // Returns the number of bytes written.
-    virtual size_t transmit(const unsigned char *data, const size_t data_size) = 0;
+    virtual size_t send(const unsigned char *data, const size_t data_size) = 0;
 
     // Tries to read data_size bytes into *data from the UART device, without blocking.
     // Returns the number of bytes read.

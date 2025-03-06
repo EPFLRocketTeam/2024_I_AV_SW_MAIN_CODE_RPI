@@ -1,22 +1,26 @@
 #include "control_thread.h"
-#include "shared_memory.h"
 #include "DroneController.h"
+#include "shared_memory.h"
 #include <cactus_rt/rt.h>
 #include <iostream>
 
 using cactus_rt::CyclicThread;
 
-ControlThread::ControlThread(SharedMemory<ControlOutput> *control_memory) : CyclicThread("ControlThread", MakeConfig()), control_memory(control_memory)
+ControlThread::ControlThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output)
+    : CyclicThread("ControlThread", MakeConfig()), control_input(control_input), control_output(control_output)
 {
     controller.reset();
 }
 
 CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
 {
-    ControlOutput output = controller.posControlD({0, 0, 1}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0});
-    // LOG_INFO(Logger(), "Output: d1: {}, d2: {}, thrust: {}, mz: {}", output.d1, output.d2, output.thrust, output.mz);
 
-    control_memory->Write(output);
+    ControlInput input = control_input->Read();
+    DroneState state = input.state;
+    AttRemoteInput remote_input = input.remote_input;
+    ControlOutput output = controller.attControlD(remote_input.inline_thrust, remote_input.att_ref,
+                                                  remote_input.yaw_rate_ref, state.attitude, state.rate);
+    control_output->Write(output);
 
     return LoopControl::Continue;
 }

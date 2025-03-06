@@ -1,9 +1,11 @@
+#include "com_thread.h"
+#include "control_thread.h"
+#include "quill/Quill.h" // For Logger
+#include "shared_memory.h"
 #include <cactus_rt/rt.h>
 #include <iostream>
-#include "shared_memory.h"
-#include "control_thread.h"
-#include "com_thread.h"
-#include "quill/Quill.h" // For Logger
+
+#include <cstdint>
 
 using cactus_rt::App;
 
@@ -21,7 +23,7 @@ int main()
 
     // Create the cactus_rt application
     App app("MainCodeRpi", app_config);
-    
+
     // Main thread logger
     auto main_logger = quill::create_logger("MainThread");
     LOG_INFO(main_logger, "Main thread started");
@@ -32,16 +34,16 @@ int main()
     // Global Object Dictionary
     struct GOD
     {
-        SharedMemory<ControlOutput> control_memory;
+        SharedMemory<ControlInput> control_input;
+        SharedMemory<ControlOutput> control_output;
     };
     GOD god;
-    god.control_memory.Write(ControlOutput{0, 0, 0, 0});
 
     // UART Communication Thread
     std::shared_ptr<ComThread> com_thread;
     try
     {
-        com_thread = app.CreateThread<ComThread>(&god.control_memory);
+        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
     }
     catch (std::exception &e)
     {
@@ -51,7 +53,7 @@ int main()
     }
 
     // Control Thread
-    // auto control_thread = app.CreateThread<ControlThread>(&god.control_memory);
+    std::shared_ptr<ControlThread> control_thread = app.CreateThread<ControlThread>(&god.control_input, &god.control_output);
 
     // Start the application, which starts all the registered threads
     app.Start();

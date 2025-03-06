@@ -12,7 +12,7 @@ bool UART::writePacket(const unsigned char *data, const size_t data_size)
     // Try sending the remaining previous packet first (if any)
     if (transmit_buffer_size > 0)
     {
-        size_t bytes_written = transmit(transmit_buffer, transmit_buffer_size);
+        size_t bytes_written = send(transmit_buffer, transmit_buffer_size);
         transmit_buffer_size -= bytes_written;
         // This indicates a partial write, due to a full UART transmit_buffer
         if (transmit_buffer_size > 0)
@@ -28,7 +28,7 @@ bool UART::writePacket(const unsigned char *data, const size_t data_size)
         return true;
     }
 
-    size_t bytes_written = transmit(data, data_size);
+    size_t bytes_written = send(data, data_size);
     // This indicates a partial write, due to a full UART transmit_buffer
     if (bytes_written < data_size)
     {

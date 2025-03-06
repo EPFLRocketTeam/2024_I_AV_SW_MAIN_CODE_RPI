@@ -12,7 +12,7 @@ public:
 
 private:
     quill::Logger *logger;
-    size_t transmit(const unsigned char *data, const size_t data_size) override;
+    size_t send(const unsigned char *data, const size_t data_size) override;
     size_t receive(unsigned char *data, const size_t data_size) override;
     int uart_fd;
 };

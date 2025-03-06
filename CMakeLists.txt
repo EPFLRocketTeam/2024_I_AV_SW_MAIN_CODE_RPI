@@ -32,6 +32,8 @@ else()
     message(STATUS "Compiling for the current machine")
 endif()
 
+option(ENABLE_TESTS "Enable test compilation" OFF)
+
 project(maincode)
 
 add_subdirectory(cactus_rt)
