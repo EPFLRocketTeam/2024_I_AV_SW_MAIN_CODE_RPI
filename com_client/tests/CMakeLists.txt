@@ -2,7 +2,7 @@
 enable_testing()
 
 # Define test executable
-add_executable(test_com_client test3.cc)
+add_executable(test_com_client test.cc)
 
 # Include com_client
 target_include_directories(test_com_client PRIVATE ${CMAKE_SOURCE_DIR}/inc)

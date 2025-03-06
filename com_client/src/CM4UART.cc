@@ -1,18 +1,13 @@
 #include "CM4UART.h"
-#include <fcntl.h>   // For open
-#include <unistd.h>  // For read, write, close
-#include <termios.h> // Terminal I/O
-#include <stdexcept> // For runtime_error
-#include <cstring>   // For memset
 #include "quill/Quill.h" // For Logger
+#include <cstring>       // For memset
+#include <fcntl.h>       // For open
+#include <stdexcept>     // For runtime_error
+#include <termios.h>     // Terminal I/O
+#include <unistd.h>      // For read, write, close
 
-#include <iostream>
-using namespace std;
-
-CM4UART::CM4UART(const int baudrate, const char *device, quill::Logger* logger) : UART(baudrate, device)
+CM4UART::CM4UART(const int baudrate, const char *device, quill::Logger *logger) : UART()
 {
-    this->logger = logger;
-
     // Open UART device, in read-write, non-blocking mode.
     // NOCTTY means that the device is not the controlling terminal for the process.
     uart_fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -60,7 +55,7 @@ CM4UART::~CM4UART()
     close(uart_fd);
 }
 
-size_t CM4UART::send(const unsigned char *data, const size_t data_size)
+size_t CM4UART::Send(const unsigned char *data, const size_t data_size)
 {
     ssize_t bytes_written = write(uart_fd, data, data_size);
     if (bytes_written == -1)
@@ -79,7 +74,7 @@ size_t CM4UART::send(const unsigned char *data, const size_t data_size)
     return bytes_written;
 }
 
-size_t CM4UART::receive(unsigned char *data, const size_t data_size)
+size_t CM4UART::Receive(unsigned char *data, const size_t data_size)
 {
     ssize_t bytes_read = read(uart_fd, data, data_size);
     if (bytes_read == -1)
@@ -96,4 +91,26 @@ size_t CM4UART::receive(unsigned char *data, const size_t data_size)
         }
     }
     return bytes_read;
+}
+
+void CM4UART::Log(LOG_LEVEL level, const char *message)
+{
+    switch (level)
+    {
+    case LOG_LEVEL::DEBUG:
+        LOG_DEBUG(logger, "", message);
+        break;
+    case LOG_LEVEL::INFO:
+        LOG_INFO(logger, "", message);
+        break;
+    case LOG_LEVEL::WARNING:
+        LOG_WARNING(logger, "", message);
+        break;
+    case LOG_LEVEL::ERROR:
+        LOG_ERROR(logger, "", message);
+        break;
+    default:
+        LOG_INFO(logger, "", message);
+        break;
+    }
 }

@@ -2,7 +2,6 @@
 #define COM_THREAD_H
 
 #include <cactus_rt/rt.h>
-#include "Client.h"
 #include "shared_memory.h"
 #include "DroneController.h"
 #include "CM4UART.h"
@@ -31,28 +30,28 @@ private:
 
     CM4UART *uart_manager;
 
-    Manager manager;
+    // Manager manager;
     
-    struct ControlInputModules
-    {
-        OneFloatModule d1;
-        OneFloatModule d2;
-        OneFloatModule thrust;
-        OneFloatModule mz;
-    } control_input_modules;
+    // struct ControlInputModules
+    // {
+    //     OneFloatModule d1;
+    //     OneFloatModule d2;
+    //     OneFloatModule thrust;
+    //     OneFloatModule mz;
+    // } control_input_modules;
 
-    struct ControlOutputModules
-    {
-        ThreeFloatModule drone_attitude;
-        ThreeFloatModule drone_rate;
-        OneFloatModule drone_attitude_count; // Actually an int
-        OneFloatModule drone_rate_count;     // Actually an int
+    // struct ControlOutputModules
+    // {
+    //     ThreeFloatModule drone_attitude;
+    //     ThreeFloatModule drone_rate;
+    //     OneFloatModule drone_attitude_count; // Actually an int
+    //     OneFloatModule drone_rate_count;     // Actually an int
         
-        ThreeFloatModule remote_att_ref;
-        OneFloatModule remote_inline_thrust;
-        OneFloatModule remote_yaw_rate_ref;
-        OneFloatModule remote_armed; // Actually a bool: 0 is false, 1 is true
-    } control_output_modules;
+    //     ThreeFloatModule remote_att_ref;
+    //     OneFloatModule remote_inline_thrust;
+    //     OneFloatModule remote_yaw_rate_ref;
+    //     OneFloatModule remote_armed; // Actually a bool: 0 is false, 1 is true
+    // } control_output_modules;
 
 };
 

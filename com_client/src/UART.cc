@@ -1,100 +1,195 @@
 #include "UART.h"
-#include <cstring> // For memcpy, memmove
-#include <stdexcept>
+#include "Payload.h"
+#include <cstring>
 
-UART::UART(const int baudrate, const char *device)
+UART::UART()
+    : readIndex(0),
+      writeIndex(0),
+      peekIndex(0)
 {
-    transmit_buffer_size = 0;
 }
 
-bool UART::writePacket(const unsigned char *data, const size_t data_size)
+void UART::RegisterHandler(int packetId, HandlerFunction handler)
 {
-    // Try sending the remaining previous packet first (if any)
-    if (transmit_buffer_size > 0)
-    {
-        size_t bytes_written = send(transmit_buffer, transmit_buffer_size);
-        transmit_buffer_size -= bytes_written;
-        // This indicates a partial write, due to a full UART transmit_buffer
-        if (transmit_buffer_size > 0)
-        {
-            std::memmove(transmit_buffer, transmit_buffer + bytes_written, transmit_buffer_size);
-            return false; // The packet was dropped, because we are still waiting for the previous packet to be sent
-        }
-    }
-
-    // If transmit_buffer is empty, try to send the new data
-    if (data_size <= 0)
-    {
-        return true;
-    }
-
-    size_t bytes_written = send(data, data_size);
-    // This indicates a partial write, due to a full UART transmit_buffer
-    if (bytes_written < data_size)
-    {
-        size_t remaining_size = data_size - bytes_written;
-        if (remaining_size > sizeof(transmit_buffer))
-        {
-            throw std::runtime_error("Packet too big for transmit_buffer");
-        }
-        std::memcpy(transmit_buffer, data + bytes_written, remaining_size);
-        transmit_buffer_size = remaining_size;
-    }
-
-    return true; // The packet was either sent or buffered
+    handlers[packetId] = handler;
 }
 
-bool UART::readPacket(unsigned char *data, size_t &data_size)
+size_t UART::AvailableBytesToPeek() const
 {
-    // Append the new data to the receive buffer
-    size_t bytes_read = receive(receive_buffer + receive_buffer_size, UART_BUFFER_SIZE - receive_buffer_size);
-    receive_buffer_size += bytes_read;
-    if (receive_buffer_size == UART_BUFFER_SIZE)
+    return (writeIndex - (readIndex + peekIndex) + RING_BUFFER_SIZE) % RING_BUFFER_SIZE;
+}
+
+uint8_t UART::Peek()
+{
+    uint8_t byte = circularBuffer[(readIndex + peekIndex) % RING_BUFFER_SIZE];
+    peekIndex = (peekIndex + 1) % RING_BUFFER_SIZE;
+    return byte;
+}
+
+void UART::AdvanceReadIndex(size_t amount)
+{
+    readIndex = (readIndex + amount) % RING_BUFFER_SIZE;
+}
+
+std::optional<uint8_t> UART::PeekUnstuff()
+{
+    if (AvailableBytesToPeek() < 1)
+        return std::nullopt;
+
+    uint8_t byte = Peek();
+
+    // Handle escape sequence
+    if (byte == ESCAPE_BYTE)
     {
-        throw std::runtime_error("Receive buffer full. Packets are being sent too fast.");
+        if (AvailableBytesToPeek() < 1)
+            return std::nullopt;
+
+        byte = Peek() ^ ESCAPE_MASK;
     }
 
-    // The index of the new line after the last byte of the packet
-    int end_of_packet = -1;
-    for (int i = receive_buffer_size - 1; i >= 0; --i)
-    {
-        if (receive_buffer[i] == '\n')
-        {
-            end_of_packet = i;
-            break;
-        }
-    }
+    return byte;
+}
 
-    // No packet found
-    if (end_of_packet == -1)
-    {
-        return false; 
-    }
-
-    // The packet is empty
-    if (end_of_packet == 0)
-    {
-        std::memmove(receive_buffer, receive_buffer + 1, receive_buffer_size - 1);
-        receive_buffer_size--;
-        data_size = 0;
-        return true;
-    }
-
-    // The index of the first byte of the packet
-    int start_of_packet = end_of_packet - 1;
-    for (; start_of_packet >= 0; --start_of_packet)
-    {
-        if (receive_buffer[start_of_packet] == '\n')
-        {
-            break;
-        }
-    }
-    start_of_packet++;
-
-    // Copy the packet to the data buffer
-    data_size = end_of_packet - start_of_packet;
-    std::memcpy(data, receive_buffer + start_of_packet, data_size);
-    std::memmove(receive_buffer, receive_buffer + end_of_packet + 1, receive_buffer_size - end_of_packet);
-    receive_buffer_size -= end_of_packet + 1;
+bool UART::DiscardCurrentByteAndContinue()
+{
+    AdvanceReadIndex(1);
     return true;
+}
+
+// Refactored TryParsePacket method
+bool UART::TryParsePacket()
+{
+    peekIndex = 0;
+
+    uint8_t packetBuffer[MAX_PACKET_SIZE_UNSTUFFED];
+    size_t packetBufferIndex = 0;
+
+    // 1. Read start byte
+    if (AvailableBytesToPeek() < 1)
+        return false;
+
+
+    uint8_t start = Peek();
+    if (start != START_BYTE)
+        return DiscardCurrentByteAndContinue();
+
+    packetBuffer[packetBufferIndex++] = start;
+
+    // 2. Read packet ID
+    auto maybeId = PeekUnstuff();
+    if (!maybeId.has_value())
+        return false;
+
+    uint8_t id = maybeId.value();
+
+    // Check if ID is valid
+    if (handlers.find(id) == handlers.end())
+    {
+        Log(LOG_LEVEL::WARNING, "Invalid packet ID received");
+        return DiscardCurrentByteAndContinue();
+    }
+
+    packetBuffer[packetBufferIndex++] = id;
+
+    // 3. Read length
+    auto maybeLength = PeekUnstuff();
+    if (!maybeLength.has_value())
+        return false;
+
+    uint8_t length = maybeLength.value();
+
+    // Check if length is valid
+    if (length > MAX_PAYLOAD_SIZE)
+    {
+        Log(LOG_LEVEL::WARNING, "Invalid packet length received");
+        return DiscardCurrentByteAndContinue();
+    }
+
+    packetBuffer[packetBufferIndex++] = length;
+
+    // 4. Read payload
+    for (size_t i = 0; i < length; i++)
+    {
+        auto maybeByte = PeekUnstuff();
+        if (!maybeByte.has_value())
+            return false;
+        packetBuffer[packetBufferIndex++] = maybeByte.value();
+    }
+
+    // 5. Read checksum
+    auto maybeChecksum = PeekUnstuff();
+    if (!maybeChecksum.has_value())
+        return false;
+
+    uint8_t checksum = maybeChecksum.value();
+
+    // Verify checksum (excluding start byte)
+    if (ComputeChecksum(packetBuffer + 1, packetBufferIndex - 1) != checksum)
+    {
+        Log(LOG_LEVEL::WARNING, "Invalid checksum received");
+        return DiscardCurrentByteAndContinue();
+    }
+
+    packetBuffer[packetBufferIndex++] = checksum;
+
+    // 6. Read end byte
+    if (AvailableBytesToPeek() < 1)
+        return false;
+
+    uint8_t end = Peek();
+    if (end != END_BYTE)
+        return DiscardCurrentByteAndContinue();
+
+    packetBuffer[packetBufferIndex++] = end;
+
+    // 7. Process valid packet
+    Payload payload(packetBuffer + 3, packetBufferIndex - 5); // Exclude start, id, length, checksum, end
+    auto handler = handlers.find(id);
+    handler->second(payload);
+
+    packetsRead++;
+
+    // Advance past this packet
+    AdvanceReadIndex(peekIndex);
+    return true;
+}
+
+uint8_t UART::ComputeChecksum(const uint8_t *data, size_t data_size)
+{
+    uint8_t checksum = 0;
+    for (size_t i = 0; i < data_size; ++i)
+    {
+        checksum += data[i];
+    }
+    return checksum; // This will give the sum modulo 256, as it's a uint8_t
+}
+
+int UART::ReceiveUARTPackets()
+{
+    packetsRead = 0;
+
+    // Receive new data into circular buffer
+    uint8_t tempBuffer[RECEIVE_BUFFER_SIZE];
+    size_t bytesReceived = Receive(tempBuffer, RECEIVE_BUFFER_SIZE);
+
+    // Check if we might have filled the receive buffer completely
+    if (bytesReceived == RECEIVE_BUFFER_SIZE)
+    {
+        Log(LOG_LEVEL::WARNING, "Receive buffer filled completely, might have lost data");
+    }
+
+    // Copy received data to circular buffer
+    // We cannot unstuff bytes here, because it would cause errors if an ESCAPE_BYTE appears at the end of the buffer :(
+    for (size_t i = 0; i < bytesReceived; i++)
+    {
+        circularBuffer[writeIndex] = tempBuffer[i];
+        writeIndex = (writeIndex + 1) % RING_BUFFER_SIZE;
+    }
+
+    // Try to parse packets until no more can be parsed
+    while (TryParsePacket())
+    {
+    }
+
+    return packetsRead;
 }

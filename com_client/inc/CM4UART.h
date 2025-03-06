@@ -12,9 +12,11 @@ public:
 
 private:
     quill::Logger *logger;
-    size_t send(const unsigned char *data, const size_t data_size) override;
-    size_t receive(unsigned char *data, const size_t data_size) override;
     int uart_fd;
+
+    size_t Send(const unsigned char *data, const size_t data_size) override;
+    size_t Receive(unsigned char *data, const size_t data_size) override;
+    void Log(LOG_LEVEL level, const char *message) override;
 };
 
 #endif // CM4_UART_H

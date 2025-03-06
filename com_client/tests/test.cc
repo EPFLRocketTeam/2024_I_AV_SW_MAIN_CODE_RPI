@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include "UART3.h"
+#include "UART.h"
 #include <cstring>
 #include <iostream>
 
@@ -35,10 +35,10 @@ void rawHandler(Payload &payload)
 }
 
 // Fake UART class for testing
-class FakeUART : public UART3
+class FakeUART : public UART
 {
   public:
-    FakeUART() : UART3() {}
+    FakeUART() : UART() {}
 
     uint8_t send_buffer[1024];
     size_t send_buffer_size = 0;
