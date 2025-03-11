@@ -15,8 +15,10 @@ int main()
     cactus_rt::AppConfig app_config;
     // Enable strict timestamp order - this will be slower, but logs will always appear in order
     app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
+
     // Set the background logging thread CPU affinity
     // app_config.logger_config.backend_thread_cpu_affinity = 1;
+
     // Further logger configuration can be done here
     // See https://quillcpp.readthedocs.io/en/latest/quick_start.html#logging-to-file
     // for more information on how to log to a file

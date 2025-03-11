@@ -7,18 +7,19 @@
 #include <optional>
 #include <unordered_map>
 
-const uint8_t START_BYTE = 0x7E;
-const uint8_t END_BYTE = 0x7F;
-const uint8_t ESCAPE_BYTE = 0x7D;
-const uint8_t ESCAPE_MASK = 0x20;
+constexpr uint8_t START_BYTE = 0x7E;
+constexpr uint8_t END_BYTE = 0x7F;
+constexpr uint8_t ESCAPE_BYTE = 0x7D;
+constexpr uint8_t ESCAPE_MASK = 0x20;
 
-const size_t MAX_PAYLOAD_SIZE = 256;
-const size_t MAX_PACKET_SIZE_STUFFED = (MAX_PAYLOAD_SIZE + 3) * 2 + 2;
-const size_t MAX_PACKET_SIZE_UNSTUFFED = MAX_PAYLOAD_SIZE + 5;
-const size_t RECEIVE_BUFFER_SIZE = 2048;
-const size_t RING_BUFFER_SIZE = 1024;
+constexpr size_t MAX_PAYLOAD_SIZE = 256;
+constexpr size_t MAX_PACKET_SIZE_STUFFED = (MAX_PAYLOAD_SIZE + 3) * 2 + 2;
+constexpr size_t MAX_PACKET_SIZE_UNSTUFFED = MAX_PAYLOAD_SIZE + 5;
+constexpr size_t RECEIVE_BUFFER_SIZE = 1024;
+constexpr size_t SEND_BUFFER_SIZE = 1024;
+constexpr size_t RING_BUFFER_SIZE = 2048;
 
-// TODO: Use std::function ans std::binf instead of function pointers 
+// TODO: Use std::function ans std::bind instead of function pointers
 typedef void (*HandlerFunction)(Payload &);
 
 class UART
@@ -30,16 +31,14 @@ class UART
     // Register a packet handler function for a specific ID.
     // If the function is a method of a class, use a static method.
     // Maybe lambdas or std::function would be better
+    // TODO: Use std::function ans std::bind instead of function pointers
     void RegisterHandler(int packet_id, HandlerFunction handler);
 
     // Writes a packet to the UART device.
     // Throws an exception if the packet could not be transmitted.
-    void SendUARTPacket(const Payload &packet);
+    void SendUARTPacket(const uint8_t id, Payload &payload);
 
-    // Read bytes from the UART device and try to parse them into packets.
-    // Calls the registered handler functions for each packet.
-    // Returns the number of packets received.
-    int ReceiveUARTPackets();
+    int Update();
 
   protected:
     // These methods are specific to the UART implementation.
@@ -70,11 +69,17 @@ class UART
     size_t writeIndex; // Where new data gets written
     size_t peekIndex;  // Where to peek next in the ring buffer
 
+    uint8_t sendBuffer[SEND_BUFFER_SIZE];
+    size_t sendBufferStart;
+    size_t sendBufferEnd;
+
     int packetsRead; // The number of packets that have been read
 
     // Handlers map
     std::unordered_map<int, HandlerFunction> handlers;
 
+    // Calculate the available space in the send buffer
+    size_t AvailableSendBufferSpace() const;
     // Compute the checksum of the data.
     uint8_t ComputeChecksum(const uint8_t *data, size_t data_size);
     // Number of bytes that can be peek before the end of the ring buffer
@@ -89,6 +94,15 @@ class UART
     bool DiscardCurrentByteAndContinue();
     // Packet parsing method
     bool TryParsePacket();
+
+    // Writes a packet to the UART device.
+    // Throws an exception if the packet could not be transmitted.
+    void SendUARTPackets();
+
+    // Read bytes from the UART device and try to parse them into packets.
+    // Calls the registered handler functions for each packet.
+    // Returns the number of packets received.
+    int ReceiveUARTPackets();
 };
 
 #endif // UART_H

@@ -6,7 +6,7 @@ Payload::Payload() : payloadSize(0), readPosition(0) {
     std::memset(payload, 0, MAX_SIZE);
 }
 
-Payload::Payload(const unsigned char *bytes, size_t size)
+Payload::Payload(const uint8_t *bytes, size_t size)
 {
     if (size > MAX_SIZE)
     {
@@ -18,7 +18,7 @@ Payload::Payload(const unsigned char *bytes, size_t size)
     readPosition = 0;
 }
 
-void Payload::SetBytes(const unsigned char* bytes, size_t size) {
+void Payload::SetBytes(const uint8_t* bytes, size_t size) {
     if (size > MAX_SIZE) {
         throw std::length_error("Payload size exceeds maximum packet size");
     }
@@ -28,7 +28,7 @@ void Payload::SetBytes(const unsigned char* bytes, size_t size) {
     readPosition = 0;
 }
 
-const unsigned char* Payload::GetBytes() const {
+const uint8_t* Payload::GetBytes() const {
     return payload;
 }
 
@@ -63,7 +63,7 @@ void Payload::Write(bool value) {
     payloadSize += 1;
 }
 
-void Payload::Write(const unsigned char* bytes, size_t size) {
+void Payload::Write(const uint8_t* bytes, size_t size) {
     if (payloadSize + size > MAX_SIZE) {
         throw std::length_error("Cannot write bytes: would exceed maximum packet size");
     }
@@ -104,7 +104,7 @@ bool Payload::ReadBool() {
     return value;
 }
 
-void Payload::ReadBytes(unsigned char* destBuffer, size_t length) {
+void Payload::ReadBytes(uint8_t* destBuffer, size_t length) {
     if (readPosition + length > payloadSize) {
         throw std::out_of_range("Not enough bytes to read");
     }

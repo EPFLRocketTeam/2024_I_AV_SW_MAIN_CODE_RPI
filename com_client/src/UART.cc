@@ -1,17 +1,96 @@
 #include "UART.h"
 #include "Payload.h"
 #include <cstring>
+#include <stdexcept>
+
+// #include <iomanip>
+// #include <iostream>
+// using namespace std;
 
 UART::UART()
     : readIndex(0),
       writeIndex(0),
-      peekIndex(0)
+      peekIndex(0),
+      sendBufferStart(0),
+      sendBufferEnd(0)
 {
 }
 
 void UART::RegisterHandler(int packetId, HandlerFunction handler)
 {
     handlers[packetId] = handler;
+}
+
+void UART::SendUARTPacket(const uint8_t id, Payload &payload)
+{
+    uint8_t packetBuffer[MAX_PACKET_SIZE_UNSTUFFED];
+    size_t packetBufferIndex = 0;
+
+    // 1. Start byte
+    packetBuffer[packetBufferIndex++] = START_BYTE;
+
+    // 2. Packet ID
+    packetBuffer[packetBufferIndex++] = id;
+
+    // 3. Length
+    packetBuffer[packetBufferIndex++] = payload.GetSize();
+
+    // 4. Payload
+    const uint8_t *payloadData = payload.GetBytes();
+    for (size_t i = 0; i < payload.GetSize(); i++)
+    {
+        packetBuffer[packetBufferIndex++] = payloadData[i];
+    }
+
+    // 5. Checksum
+    uint8_t checksum = ComputeChecksum(packetBuffer + 1, packetBufferIndex - 1); // Exclude start byte
+    packetBuffer[packetBufferIndex++] = checksum;
+
+    // 6. End byte
+    packetBuffer[packetBufferIndex++] = END_BYTE;
+
+    // Stuff the packet
+    uint8_t stuffedBuffer[MAX_PACKET_SIZE_STUFFED];
+    size_t stuffedBufferIndex = 0;
+
+    // 1. Copy the START_BYTE as is
+    stuffedBuffer[stuffedBufferIndex++] = packetBuffer[0]; // START_BYTE
+
+    // 2. Stuff the middle portion (ID, length, payload, checksum)
+    for (size_t i = 1; i < packetBufferIndex - 1; i++) // Skip first and last bytes
+    {
+        if (packetBuffer[i] == START_BYTE || packetBuffer[i] == END_BYTE || packetBuffer[i] == ESCAPE_BYTE)
+        {
+            stuffedBuffer[stuffedBufferIndex++] = ESCAPE_BYTE;
+            stuffedBuffer[stuffedBufferIndex++] = packetBuffer[i] ^ ESCAPE_MASK;
+        }
+        else
+        {
+            stuffedBuffer[stuffedBufferIndex++] = packetBuffer[i];
+        }
+    }
+
+    // 3. Copy the END_BYTE as is
+    stuffedBuffer[stuffedBufferIndex++] = packetBuffer[packetBufferIndex - 1]; // END_BYTE
+
+    // Add the stuffed packet to the send buffer
+    if (AvailableSendBufferSpace() < stuffedBufferIndex)
+    {
+        throw std::runtime_error("Send buffer is full");
+    }
+
+    for (size_t i = 0; i < stuffedBufferIndex; i++)
+    {
+        sendBuffer[sendBufferEnd] = stuffedBuffer[i];
+        sendBufferEnd = (sendBufferEnd + 1) % SEND_BUFFER_SIZE;
+    }
+}
+
+int UART::Update()
+{
+    int packetReceived = ReceiveUARTPackets();
+    SendUARTPackets();
+    return packetReceived;
 }
 
 size_t UART::AvailableBytesToPeek() const
@@ -56,7 +135,6 @@ bool UART::DiscardCurrentByteAndContinue()
     return true;
 }
 
-// Refactored TryParsePacket method
 bool UART::TryParsePacket()
 {
     peekIndex = 0;
@@ -67,7 +145,6 @@ bool UART::TryParsePacket()
     // 1. Read start byte
     if (AvailableBytesToPeek() < 1)
         return false;
-
 
     uint8_t start = Peek();
     if (start != START_BYTE)
@@ -127,6 +204,9 @@ bool UART::TryParsePacket()
     if (ComputeChecksum(packetBuffer + 1, packetBufferIndex - 1) != checksum)
     {
         Log(LOG_LEVEL::WARNING, "Invalid checksum received");
+        // std::cout << "received: " << std::hex << std::setfill('0') << std::setw(2) << (int)checksum << std::endl;
+        // std::cout << "computed: " << std::hex << std::setfill('0') << std::setw(2) << (int)ComputeChecksum(packetBuffer + 1, packetBufferIndex - 1) << std::endl;
+        // std::cout << std::dec;
         return DiscardCurrentByteAndContinue();
     }
 
@@ -152,6 +232,31 @@ bool UART::TryParsePacket()
     // Advance past this packet
     AdvanceReadIndex(peekIndex);
     return true;
+}
+
+void UART::SendUARTPackets()
+{
+    // Send data from the send buffer
+    if (sendBufferStart != sendBufferEnd)
+    {
+        size_t bytesToSend = (sendBufferEnd >= sendBufferStart) ? (sendBufferEnd - sendBufferStart) : (SEND_BUFFER_SIZE - sendBufferStart);
+        // std::cout << "Sending " << bytesToSend << " bytes" << std::endl;
+        size_t bytesSent = Send(sendBuffer + sendBufferStart, bytesToSend);
+
+        sendBufferStart = (sendBufferStart + bytesSent) % SEND_BUFFER_SIZE;
+    }
+}
+
+size_t UART::AvailableSendBufferSpace() const
+{
+    if (sendBufferEnd >= sendBufferStart)
+    {
+        return SEND_BUFFER_SIZE - (sendBufferEnd - sendBufferStart) - 1;
+    }
+    else
+    {
+        return sendBufferStart - sendBufferEnd - 1;
+    }
 }
 
 uint8_t UART::ComputeChecksum(const uint8_t *data, size_t data_size)

@@ -1,9 +1,6 @@
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-
 #include "UART.h"
 #include <cstring>
-#include <iostream>
 
 int intReceived;
 float floatReceived;
@@ -85,7 +82,7 @@ TEST_CASE("Test receiving integer packets")
     uint8_t packet[] = {START_BYTE, 0x01, 0x04, 0x39, 0x01, 0x00, 0x00, 0x3f, END_BYTE};
     uart.receive_buffer_size = sizeof(packet);
     std::memcpy(uart.receive_buffer, packet, sizeof(packet));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
+    REQUIRE(uart.Update() == 1);
     REQUIRE(intReceived == 313);
 
     // Test receiving another packet with an integer
@@ -93,7 +90,7 @@ TEST_CASE("Test receiving integer packets")
     uint8_t packet1[] = {START_BYTE, 0x01, 0x04, 0x38, 0x01, 0x00, 0x00, 0x3e, END_BYTE};
     uart.receive_buffer_size = sizeof(packet1);
     std::memcpy(uart.receive_buffer, packet1, sizeof(packet1));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
+    REQUIRE(uart.Update() == 1);
     REQUIRE(intReceived == 312);
 }
 
@@ -109,10 +106,10 @@ TEST_CASE("Test receiving float packets")
     uint8_t packet2[] = {START_BYTE, 0x02, 0x04, 0xda, 0x0f, 0x49, 0x40, 0x78, END_BYTE};
     uart.receive_buffer_size = sizeof(packet2);
     std::memcpy(uart.receive_buffer, packet2, sizeof(packet2));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
-    
+    REQUIRE(uart.Update() == 1);
+
     // Fix for the float comparison - use separate tests instead of chained expressions
-    const float expectedValue = 3.14159265f;
+    const float expectedValue = 3.14159f;
     const float tolerance = 0.00001f;
     REQUIRE(floatReceived >= (expectedValue - tolerance));
     REQUIRE(floatReceived <= (expectedValue + tolerance));
@@ -130,7 +127,7 @@ TEST_CASE("Test receiving boolean packets")
     uint8_t packet3[] = {START_BYTE, 0x03, 0x01, 0x01, 0x05, END_BYTE};
     uart.receive_buffer_size = sizeof(packet3);
     std::memcpy(uart.receive_buffer, packet3, sizeof(packet3));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
+    REQUIRE(uart.Update() == 1);
     REQUIRE(boolReceived == true);
 }
 
@@ -146,7 +143,7 @@ TEST_CASE("Test receiving raw byte packets")
     uint8_t packet4[] = {START_BYTE, 0x04, 0x04, 0x01, 0x02, 0x03, 0x04, 0x12, END_BYTE};
     uart.receive_buffer_size = sizeof(packet4);
     std::memcpy(uart.receive_buffer, packet4, sizeof(packet4));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
+    REQUIRE(uart.Update() == 1);
     REQUIRE(rawReceived[0] == 1);
     REQUIRE(rawReceived[1] == 2);
     REQUIRE(rawReceived[2] == 3);
@@ -171,7 +168,7 @@ TEST_CASE("Test noise rejection")
                          START_BYTE, 0x01, 0x04, 0x39, 0x01, 0x00, 0x00, 0x3f, END_BYTE, 0x33};
     uart.receive_buffer_size = sizeof(packet5);
     std::memcpy(uart.receive_buffer, packet5, sizeof(packet5));
-    REQUIRE(uart.ReceiveUARTPackets() == 2);
+    REQUIRE(uart.Update() == 2);
     REQUIRE(intReceived == 313);
     REQUIRE(boolReceived == false);
 }
@@ -191,11 +188,11 @@ TEST_CASE("Test receiving packets in chunks")
 
     uart.receive_buffer_size = sizeof(packet6a);
     std::memcpy(uart.receive_buffer, packet6a, sizeof(packet6a));
-    REQUIRE(uart.ReceiveUARTPackets() == 0);
+    REQUIRE(uart.Update() == 0);
 
     uart.receive_buffer_size = sizeof(packet6b);
     std::memcpy(uart.receive_buffer, packet6b, sizeof(packet6b));
-    REQUIRE(uart.ReceiveUARTPackets() == 1);
+    REQUIRE(uart.Update() == 1);
     REQUIRE(intReceived == 313);
 }
 
@@ -211,13 +208,79 @@ TEST_CASE("Test error handling")
     uint8_t packet7[] = {START_BYTE, 0xFF, 0x01, 0x01, 0x05, END_BYTE};
     uart.receive_buffer_size = sizeof(packet7);
     std::memcpy(uart.receive_buffer, packet7, sizeof(packet7));
-    REQUIRE(uart.ReceiveUARTPackets() == 0);
+    REQUIRE(uart.Update() == 0);
     REQUIRE(std::strcmp(uart.log_message, "Invalid packet ID received") == 0);
 
     // Test invalid checksum
     uint8_t packet8[] = {START_BYTE, 0x03, 0x01, 0x01, 0xFF, END_BYTE};
     uart.receive_buffer_size = sizeof(packet8);
     std::memcpy(uart.receive_buffer, packet8, sizeof(packet8));
-    REQUIRE(uart.ReceiveUARTPackets() == 0);
+    REQUIRE(uart.Update() == 0);
     REQUIRE(std::strcmp(uart.log_message, "Invalid checksum received") == 0);
 }
+
+TEST_CASE("Test byte unstuffing")
+{
+    FakeUART uart;
+    uart.RegisterHandler(1, &intHandler);
+    uart.RegisterHandler(2, &floatHandler);
+    uart.RegisterHandler(3, &boolHandler);
+    uart.RegisterHandler(4, &rawHandler);
+
+    // Test start byte unstuffing
+    intReceived = 0;
+    uint8_t packet1[] = {START_BYTE, 0x01, 0x04, ESCAPE_BYTE, START_BYTE ^ ESCAPE_MASK, 0x00, 0x00, 0x00, 0x83, END_BYTE};
+    uart.receive_buffer_size = sizeof(packet1);
+    std::memcpy(uart.receive_buffer, packet1, sizeof(packet1));
+    REQUIRE(uart.Update() == 1);
+    REQUIRE(intReceived == (int)START_BYTE);
+
+    // Test end byte unstuffing
+    intReceived = 0;
+    uint8_t packet2[] = {START_BYTE, 0x01, 0x04, ESCAPE_BYTE, END_BYTE ^ ESCAPE_MASK, 0x00, 0x00, 0x00, 0x84, END_BYTE};
+    uart.receive_buffer_size = sizeof(packet2);
+    std::memcpy(uart.receive_buffer, packet2, sizeof(packet2));
+    REQUIRE(uart.Update() == 1);
+    REQUIRE(intReceived == (int)END_BYTE);
+
+    // Test escape byte unstuffing
+    intReceived = 0;
+    uint8_t packet3[] = {START_BYTE, 0x01, 0x04, ESCAPE_BYTE, ESCAPE_BYTE ^ ESCAPE_MASK, 0x00, 0x00, 0x00, 0x82, END_BYTE};
+    uart.receive_buffer_size = sizeof(packet3);
+    std::memcpy(uart.receive_buffer, packet3, sizeof(packet3));
+    REQUIRE(uart.Update() == 1);
+    REQUIRE(intReceived == (int)ESCAPE_BYTE);
+}
+
+float d1 = 0;
+float d2 = 0;
+float thrust = 0;
+float mz = 0;
+void realHandler(Payload &payload)
+{
+    d1 = payload.ReadFloat();
+    d2 = payload.ReadFloat();
+    thrust = payload.ReadFloat();
+    mz = payload.ReadFloat();
+}
+
+// TODO: More realistic tests
+// TEST_CASE("Test more realistic packets")
+// {
+//     FakeUART uart;
+//     uart.RegisterHandler(1, &realHandler);
+//     uint8_t packet[] = {START_BYTE, 0x01, 0x10,
+//                         0x87, 0x16, 0xab, 0x40, // d1 c051e1b1
+//                         0xb1, 0xe1, 0x51, 0xc0,
+//                         0x00, END_BYTE};
+//     uart.receive_buffer_size = sizeof(packet);
+//     std::memcpy(uart.receive_buffer, packet, sizeof(packet));
+//     REQUIRE(uart.Update() == 1);
+
+//     float expectedD1 =  5.3465f;
+//     float expectedD2 = -3.2794f;
+// }
+
+// TODO: Test byte stuffing and big packets
+// And filling up buffers
+// And end-to-end tests
