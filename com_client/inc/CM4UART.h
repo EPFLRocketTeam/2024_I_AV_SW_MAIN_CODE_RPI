@@ -4,6 +4,7 @@
 #include "UART.h"
 #include "quill/Quill.h" // For Logger
 
+// TODO: Maybe consider having CM4UART be a component of UART instead of a subclass
 class CM4UART : public UART
 {
 public:
