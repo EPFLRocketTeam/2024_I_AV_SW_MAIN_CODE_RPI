@@ -21,6 +21,8 @@ struct GOD // Global Object Dictionary
     SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
     SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
 
+    SharedMemory<std::vector<double>> guidance_waypoint_output_memory; // output of the guidance system (9)
+
     // FMS
     SharedMemory<FSMStates> fsm_state_memory;
 
