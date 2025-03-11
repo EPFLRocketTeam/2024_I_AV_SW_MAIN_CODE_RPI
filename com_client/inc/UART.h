@@ -4,6 +4,7 @@
 #include "Payload.h"
 #include <cstddef> // For size_t
 #include <cstdint> // For uint8_t
+#include <functional>
 #include <optional>
 #include <unordered_map>
 
@@ -19,9 +20,6 @@ constexpr size_t RECEIVE_BUFFER_SIZE = 1024;
 constexpr size_t SEND_BUFFER_SIZE = 1024;
 constexpr size_t RING_BUFFER_SIZE = 2048;
 
-// TODO: Use std::function ans std::bind instead of function pointers
-typedef void (*HandlerFunction)(Payload &);
-
 class UART
 {
   public:
@@ -32,7 +30,7 @@ class UART
     // If the function is a method of a class, use a static method.
     // Maybe lambdas or std::function would be better
     // TODO: Use std::function ans std::bind instead of function pointers
-    void RegisterHandler(int packet_id, HandlerFunction handler);
+    void RegisterHandler(int packet_id, std::function<void(Payload &)> handler);
 
     // Writes a packet to the UART device.
     // Throws an exception if the packet could not be transmitted.
@@ -76,7 +74,7 @@ class UART
     int packetsRead; // The number of packets that have been read
 
     // Handlers map
-    std::unordered_map<int, HandlerFunction> handlers;
+    std::unordered_map<int, std::function<void(Payload&)>> handlers;
 
     // Calculate the available space in the send buffer
     size_t AvailableSendBufferSpace() const;

@@ -73,10 +73,10 @@ class FakeUART : public UART
 TEST_CASE("Test receiving integer packets")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test receiving a packet with an integer
     uint8_t packet[] = {START_BYTE, 0x01, 0x04, 0x39, 0x01, 0x00, 0x00, 0x3f, END_BYTE};
@@ -97,10 +97,10 @@ TEST_CASE("Test receiving integer packets")
 TEST_CASE("Test receiving float packets")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test receiving a packet with a float
     uint8_t packet2[] = {START_BYTE, 0x02, 0x04, 0xda, 0x0f, 0x49, 0x40, 0x78, END_BYTE};
@@ -118,10 +118,10 @@ TEST_CASE("Test receiving float packets")
 TEST_CASE("Test receiving boolean packets")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test receiving a packet with a bool
     uint8_t packet3[] = {START_BYTE, 0x03, 0x01, 0x01, 0x05, END_BYTE};
@@ -134,10 +134,10 @@ TEST_CASE("Test receiving boolean packets")
 TEST_CASE("Test receiving raw byte packets")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test receiving a packet with raw bytes
     uint8_t packet4[] = {START_BYTE, 0x04, 0x04, 0x01, 0x02, 0x03, 0x04, 0x12, END_BYTE};
@@ -153,10 +153,10 @@ TEST_CASE("Test receiving raw byte packets")
 TEST_CASE("Test noise rejection")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test noise rejection
     // These bytes only contain two valid packets
@@ -176,10 +176,10 @@ TEST_CASE("Test noise rejection")
 TEST_CASE("Test receiving packets in chunks")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test receiving packets broken in chunks
     intReceived = 0;
@@ -199,10 +199,10 @@ TEST_CASE("Test receiving packets in chunks")
 TEST_CASE("Test error handling")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test invalid packet id
     uint8_t packet7[] = {START_BYTE, 0xFF, 0x01, 0x01, 0x05, END_BYTE};
@@ -222,10 +222,10 @@ TEST_CASE("Test error handling")
 TEST_CASE("Test byte unstuffing")
 {
     FakeUART uart;
-    uart.RegisterHandler(1, &intHandler);
-    uart.RegisterHandler(2, &floatHandler);
-    uart.RegisterHandler(3, &boolHandler);
-    uart.RegisterHandler(4, &rawHandler);
+    uart.RegisterHandler(1, intHandler);
+    uart.RegisterHandler(2, floatHandler);
+    uart.RegisterHandler(3, boolHandler);
+    uart.RegisterHandler(4, rawHandler);
 
     // Test start byte unstuffing
     intReceived = 0;
@@ -252,19 +252,19 @@ TEST_CASE("Test byte unstuffing")
     REQUIRE(intReceived == (int)ESCAPE_BYTE);
 }
 
-float d1 = 0;
-float d2 = 0;
-float thrust = 0;
-float mz = 0;
-void realHandler(Payload &payload)
-{
-    d1 = payload.ReadFloat();
-    d2 = payload.ReadFloat();
-    thrust = payload.ReadFloat();
-    mz = payload.ReadFloat();
-}
-
 // TODO: More realistic tests
+// float d1 = 0;
+// float d2 = 0;
+// float thrust = 0;
+// float mz = 0;
+// void realHandler(Payload &payload)
+// {
+//     d1 = payload.ReadFloat();
+//     d2 = payload.ReadFloat();
+//     thrust = payload.ReadFloat();
+//     mz = payload.ReadFloat();
+// }
+
 // TEST_CASE("Test more realistic packets")
 // {
 //     FakeUART uart;

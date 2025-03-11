@@ -16,7 +16,7 @@ UART::UART()
 {
 }
 
-void UART::RegisterHandler(int packetId, HandlerFunction handler)
+void UART::RegisterHandler(int packetId, std::function<void(Payload&)> handler)
 {
     handlers[packetId] = handler;
 }
