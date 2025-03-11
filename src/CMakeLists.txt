@@ -1,8 +1,12 @@
 # Define the main executable
 
-file(GLOB HEADERS "*.h")
+include_directories(
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/gnc
+)
 
-file(GLOB SOURCES "*.cc")
+file(GLOB HEADERS "*.h" "gnc/*.h")
+file(GLOB SOURCES "*.cc" "gnc/*.cc")
 
 add_executable(rocket ${SOURCES} ${HEADERS})
 

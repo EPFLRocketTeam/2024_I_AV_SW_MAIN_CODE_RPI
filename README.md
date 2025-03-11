@@ -95,15 +95,15 @@ cd build_local
 cmake ..
 make
 ```
-The resulting executable can be found in `local_build/src/rocket`.
+The resulting executable can be found in `build_local/src/rocket`.
 
 ## Usage
 ### Main code
 The executable can be found in the build directory. It needs to be run with sudo in order to set scheduling policies:
 ```bash
-sudo ./build_dir/src/rocket
+sudo ./build_local/src/rocket
 ```
-Replace `build_dir` with the name of the build directory you used. The program will start and run until it is stopped by the user.
+Replace `build_local` with the name of the build directory you used. The program will start and run until it is stopped by the user.
 
 ## Debugging
 The `ps` utility can be use to list running threads and processes.

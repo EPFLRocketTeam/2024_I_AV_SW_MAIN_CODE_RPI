@@ -3,8 +3,8 @@
 
 #include <string>
 #include <fstream>
-#include "shared_memory.h" // Include the header for shared memory
-#include "control_thread.h"
+#include "shared_memory.h"
+#include "DroneController.h"
 #include <cactus_rt/rt.h>
 
 class LogInterface {
