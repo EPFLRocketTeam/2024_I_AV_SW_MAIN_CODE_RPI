@@ -15,6 +15,8 @@ public:
     GuidanceThread()
         : CyclicThread("GuidanceThread", MakeConfig()), 
             rocket(&result, new ModelPointMass(), true) {
+
+        stateDependentFunctions[FMSState::FMS_STATE_AUTOMATIC_FLIGHT] 
     
     }
 
