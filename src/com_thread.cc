@@ -9,18 +9,24 @@
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
 
-SharedMemory<ControlInput> *ComThread::control_input = nullptr;
-SharedMemory<ControlOutput> *ComThread::control_output = nullptr;
-
 using cactus_rt::CyclicThread;
+
+// TODO: Stop using exceptions everywhere
+// TODO: Fix segmentation fault in loopback test when reconnecting
+// => Remote debugger needed
 
 ComThread::ComThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output)
     : CyclicThread("ComThread", MakeConfig())
 {
     ComThread::control_input = control_input;
     ComThread::control_output = control_output;
+
     uart_manager = new CM4UART(BAUDRATE, DEVICE, Logger());
-    ConfigureModules();
+
+    // uart_manager->RegisterHandler((int)PacketId::ControlInput, [this](Payload &payload)
+    //                               { ReceiveControlInput(payload); });
+    uart_manager->RegisterHandler((int)PacketId::ControlOutput, [this](Payload &payload)
+                                  { ReceiveControlOutput(payload); });
 }
 
 cactus_rt::CyclicThreadConfig ComThread::MakeConfig()
@@ -43,72 +49,90 @@ ComThread::~ComThread()
     delete uart_manager;
 }
 
-void ComThread::ConfigureModules()
-{
-    // // Control input modules
-    // manager.set_module_configuration(0x02, {&control_input_modules.d1,
-    //                                         &control_input_modules.d2,
-    //                                         &control_input_modules.thrust,
-    //                                         &control_input_modules.mz});
-
-    // // Control output modules
-    // manager.set_module_configuration(0x03, {&control_output_modules.drone_attitude,
-    //                                         &control_output_modules.drone_rate,
-    //                                         &control_output_modules.drone_attitude_count,
-    //                                         &control_output_modules.drone_rate_count,
-    //                                         &control_output_modules.remote_att_ref,
-    //                                         &control_output_modules.remote_inline_thrust,
-    //                                         &control_output_modules.remote_yaw_rate_ref,
-    //                                         &control_output_modules.remote_armed});
-}
-
 CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
-    // // Send control output
-    // ControlOutput output = control_output->Read();
-    // std::string sent_message = EncodeControlOutput(output);
-    // uart_manager->writePacket((unsigned char *)sent_message.c_str(), sent_message.size());
+    uart_manager->ReceiveUARTPackets();
 
-    // // Receive control input
-    // unsigned char data[1024];
-    // size_t data_size;
-    // uart_manager->readPacket(data, data_size);
-    // std::string received_message = std::string(reinterpret_cast<char*>(data), data_size);
-    // DecodeControlInput(received_message);
+    ControlOutput output = control_output->Read();
+    LOG_INFO(Logger(), "Sending control output: d1={}, d2={}, thrust={}, mz={}", output.d1, output.d2, output.thrust, output.mz);
+
+    SendControlOutput(output);
+
+    uart_manager->SendUARTPackets();
 
     return LoopControl::Continue;
 }
 
-// std::string ComThread::EncodeControlOutput(ControlOutput &control_output)
+void ComThread::SendControlOutput(const ControlOutput &output)
+{
+    Payload payload;
+    bool success = true;
+    success &= payload.WriteDouble(output.d1);
+    success &= payload.WriteDouble(output.d2);
+    success &= payload.WriteDouble(output.thrust);
+    success &= payload.WriteDouble(output.mz);
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to write control output to payload");
+        return;
+    }
+
+    uart_manager->SendUARTPacket((int)PacketId::ControlOutput, payload);
+}
+
+void ComThread::ReceiveControlOutput(Payload &payload)
+{
+    ControlOutput output;
+    bool success = true;
+
+    success &= payload.ReadDouble(output.d1);
+    success &= payload.ReadDouble(output.d2);
+    success &= payload.ReadDouble(output.thrust);
+    success &= payload.ReadDouble(output.mz);
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to read control output from payload");
+        return;
+    }
+
+    LOG_INFO(Logger(), "Received control output: d1={}, d2={}, thrust={}, mz={}", output.d1, output.d2, output.thrust, output.mz);
+
+    control_output->Write(output);
+}
+
+// void ComThread::ReceiveControlInput(Payload &payload)
 // {
-//     control_input_modules.d1.set_value(control_output.d1);
-//     control_input_modules.d2.set_value(control_output.d2);
-//     control_input_modules.thrust.set_value(control_output.thrust);
-//     control_input_modules.mz.set_value(control_output.mz);
+//     DroneState state;
+//     state.attitude = ReadVec3(payload);
+//     state.rate = ReadVec3(payload);
+//     state.attitude_count = payload.ReadInt();
+//     state.rate_count = payload.ReadInt();
 
-//     const int length = 1 + 4 * 4; // 1 byte for module id, 4 bytes for each module
-//     char combined_buffer[length];
-//     std::string encoded_message;
-//     manager.generate_combined_message(0x02, combined_buffer, encoded_message);
+//     AttRemoteInput remote_input;
+//     remote_input.att_ref = ReadVec3(payload);
+//     remote_input.inline_thrust = payload.ReadDouble();
+//     remote_input.yaw_rate_ref = payload.ReadDouble();
+//     remote_input.arm = payload.ReadBool();
 
-//     return encoded_message;
+//     ControlInput input;
+//     input.state = state;
+//     input.remote_input = remote_input;
+//     control_input->Write(input);
 // }
 
-// void ComThread::DecodeControlInput(const std::string &message)
+// void ComThread::WriteVec3(Vec3 vec, Payload &payload)
 // {
-//     char identifier;
-//     std::vector<std::vector<float>> values;
-//     manager.unpack_combined_message(message, identifier, values);
+//     payload.WriteDouble(vec.x);
+//     payload.WriteDouble(vec.y);
+//     payload.WriteDouble(vec.z);
+// }
 
-//     LOG_INFO(Logger(), "Decoded values for identifier: {}", identifier);
-
-//     for (const auto &module_values : values)
-//     {
-//         std::string log_message = "Values: ";
-//         for (const auto &val : module_values)
-//         {
-//             log_message += std::to_string(val) + ", ";
-//         }
-//         LOG_INFO(Logger(), "{}", log_message);
-//     }
+// Vec3 ComThread::ReadVec3(Payload &payload)
+// {
+//     double x = payload.ReadDouble();
+//     double y = payload.ReadDouble();
+//     double z = payload.ReadDouble();
+//     return Vec3(x, y, z);
 // }

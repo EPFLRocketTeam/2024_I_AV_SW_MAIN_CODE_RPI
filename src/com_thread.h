@@ -21,38 +21,24 @@ protected:
 
 private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
-    void ConfigureModules();
-    std::string EncodeControlOutput(ControlOutput &control_data);
-    void DecodeControlInput(const std::string &message);
 
-    static SharedMemory<ControlInput> *control_input;
-    static SharedMemory<ControlOutput> *control_output;
+    void SendControlOutput(const ControlOutput &output);
+    void ReceiveControlOutput(Payload &payload);
+    void ReceiveControlInput(Payload &payload);
+
+    void WriteVec3(Vec3 vec, Payload &payload);
+    Vec3 ReadVec3(Payload &payload);
+
+    enum class PacketId
+    {
+        ControlInput = 1,
+        ControlOutput,
+    };
+
+    SharedMemory<ControlInput> *control_input;
+    SharedMemory<ControlOutput> *control_output;
 
     CM4UART *uart_manager;
-
-    // Manager manager;
-    
-    // struct ControlInputModules
-    // {
-    //     OneFloatModule d1;
-    //     OneFloatModule d2;
-    //     OneFloatModule thrust;
-    //     OneFloatModule mz;
-    // } control_input_modules;
-
-    // struct ControlOutputModules
-    // {
-    //     ThreeFloatModule drone_attitude;
-    //     ThreeFloatModule drone_rate;
-    //     OneFloatModule drone_attitude_count; // Actually an int
-    //     OneFloatModule drone_rate_count;     // Actually an int
-        
-    //     ThreeFloatModule remote_att_ref;
-    //     OneFloatModule remote_inline_thrust;
-    //     OneFloatModule remote_yaw_rate_ref;
-    //     OneFloatModule remote_armed; // Actually a bool: 0 is false, 1 is true
-    // } control_output_modules;
-
 };
 
 #endif // COM_THREAD_H
