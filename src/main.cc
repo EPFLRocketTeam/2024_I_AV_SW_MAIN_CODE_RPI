@@ -8,6 +8,7 @@
 #include "control_thread.h"
 #include "guidance_thread.h"
 #include "navigation_thread.h"
+#include "log_interface.h"
 
 using cactus_rt::App;
 
@@ -46,6 +47,12 @@ int main()
     // We first create cactus_rt App object.
     App app;
 
+    quill::Config cfg;
+
+    cfg.default_handlers.emplace_back(quill::file_handler("log.txt","w")); // "w" pour write mode
+    quill::configure(cfg);
+    quill::start();
+
     std::cout << "Creating threads...\n";
     
     auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
@@ -61,6 +68,13 @@ int main()
                                                                 true);
 
     auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
+
+    auto log_interface = app.CreateThread<LogInterface>(&god.control_memory, 
+                                                        &god.current_state_memory, 
+                                                        &god.waypoint_state_memory, 
+                                                        &god.guidance_output_memory, 
+                                                        &god.fsm_state_memory);
+    
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
