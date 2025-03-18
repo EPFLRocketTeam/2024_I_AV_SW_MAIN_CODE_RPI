@@ -14,7 +14,6 @@ ControlThread::ControlThread(SharedMemory<ControlInput> *control_input, SharedMe
 
 CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
 {
-
     ControlInput input = control_input->Read();
     DroneState state = input.state;
     AttRemoteInput remote_input = input.remote_input;
@@ -33,7 +32,7 @@ cactus_rt::CyclicThreadConfig ControlThread::MakeConfig()
     config.period_ns = 10'000'000;
 
     // Pin this thread on CPU core #3
-    config.cpu_affinity = std::vector<size_t>{3};
+    // config.cpu_affinity = std::vector<size_t>{3};
 
     // Run the thread with SCHED_FIFO at real-time priority of 90.
     config.SetFifoScheduler(90);

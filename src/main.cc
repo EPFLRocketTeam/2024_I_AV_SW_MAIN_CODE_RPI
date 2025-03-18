@@ -55,7 +55,7 @@ int main()
     }
 
     // Control Thread
-    // std::shared_ptr<ControlThread> control_thread = app.CreateThread<ControlThread>(&god.control_input, &god.control_output);
+    std::shared_ptr<ControlThread> control_thread = app.CreateThread<ControlThread>(&god.control_input, &god.control_output);
 
     // Start the application, which starts all the registered threads
     app.Start();
