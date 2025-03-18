@@ -8,6 +8,7 @@
 
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
+constexpr bool DEBUG = true;
 
 using cactus_rt::CyclicThread;
 
@@ -71,9 +72,20 @@ CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
     // ControlInput input = control_input->Read();
     // SendControlInput(input);
 
-    ControlOutput output = control_output->Read();
-    SendControlOutput(output);
+    ControlOutput output;
+    if (DEBUG)
+    {
+        output.d1 = 0.1;
+        output.d2 = 0.2;
+        output.thrust = 0.3;
+        output.mz = 0.4;
+    }
+    else
+    {
+        output = control_output->Read();
+    }
 
+    SendControlOutput(output);
     uart_manager->SendUARTPackets();
 
     return LoopControl::Continue;
@@ -193,7 +205,10 @@ void ComThread::ReceiveControlInput(Payload &payload)
              input.state.attitude_count, input.state.rate_count,
              input.remote_input.inline_thrust, input.remote_input.yaw_rate_ref, input.remote_input.arm);
 
-    control_input->Write(input);
+    if (!DEBUG)
+    {
+        control_input->Write(input);
+    }
 }
 
 bool ComThread::WriteVec3(Payload &payload, Vec3 vec)
