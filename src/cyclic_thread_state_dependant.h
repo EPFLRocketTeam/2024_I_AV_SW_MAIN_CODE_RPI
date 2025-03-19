@@ -22,6 +22,8 @@ public:
     {
         // std::cout << "CyclicThreadStateDependant created\n";
     }
+
+    virtual ~CyclicThreadStateDependant() = default;
     
     cactus_rt::CyclicThread::LoopControl Loop(int64_t elapsed_ns) noexcept final {
         FSMStates current_state = fsm_state_memory->Read();

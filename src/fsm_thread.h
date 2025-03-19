@@ -16,7 +16,7 @@ private:
     SharedMemory<FSMStates>* fsm_state_memory;
     bool debug;
 
-    LoopControl run(int64_t elapsed_ns) noexcept;
+    cactus_rt::CyclicThread::LoopControl run(int64_t elapsed_ns) noexcept;
 };
 
 #endif // FSM_THREAD_H

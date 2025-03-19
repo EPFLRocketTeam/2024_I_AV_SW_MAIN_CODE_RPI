@@ -1,6 +1,6 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
-#include "shared_memory.h"
+#include "god.h"
 #include "fsm_states.h"
 
 #include "fsm_thread.h"
@@ -8,33 +8,9 @@
 #include "control_thread.h"
 #include "guidance_thread.h"
 #include "navigation_thread.h"
-#include "log_interface.h"
+#include "log_thread.h"
 
 using cactus_rt::App;
-
-struct GOD // Global Object Dictionary
-{
-    // Control
-    SharedMemory<ControlOutput> control_memory;
-
-    // Guidance
-    SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
-    SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
-    SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
-
-    SharedMemory<std::vector<double>> guidance_waypoint_output_memory; // output of the guidance system (9)
-
-    // FMS
-    SharedMemory<FSMStates> fsm_state_memory;
-
-    // Constructor
-    GOD() { 
-        control_memory.Write(ControlOutput{0, 0, 0, 0}); //What should the initial values be?
-        fsm_state_memory.Write(FSMStates::IDLE);
-        current_state_memory.Write(std::vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
-        waypoint_state_memory.Write(std::vector<double>{0, 0, 2, 0, 0, 0, 0, 0, 0});
-    }
-};
 
 
 int main()
@@ -45,23 +21,32 @@ int main()
     cactus_rt::SetUpTerminationSignalHandler();
 
     // We first create cactus_rt App object.
-    App app;
+    
 
-    quill::Config cfg;
+    // Create a cactus_rt app configuration
+    cactus_rt::AppConfig app_config;
+    app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
+    app_config.logger_config.backend_thread_cpu_affinity = 1;
+    app_config.logger_config.default_handlers.emplace_back(quill::file_handler("log.txt"));
 
-    cfg.default_handlers.emplace_back(quill::file_handler("log.txt","w")); // "w" pour write mode
-    quill::configure(cfg);
-    quill::start();
+    App app("RocketApp", app_config); 
+
+    // quill::Config cfg;
+    // cfg.default_handlers.emplace_back(quill::file_handler("log.txt"));
+    // quill::configure(cfg);
+    // // quill::start();
+
+    // LOG_INFO(Logger(), "This is an info log");
 
     std::cout << "Creating threads...\n";
     
     auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
                                                             &god.control_memory, true);
 
-    auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
-                                                            &god.current_state_memory, 
-                                                            &god.waypoint_state_memory, 
-                                                            &god.guidance_output_memory, true);
+    // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
+    //                                                         &god.current_state_memory, 
+    //                                                         &god.waypoint_state_memory, 
+    //                                                         &god.guidance_output_memory, true);
 
     auto navigation_thread = app.CreateThread<NavigationThread>(&god.fsm_state_memory,
                                                                 &god.current_state_memory, 
@@ -69,11 +54,7 @@ int main()
 
     auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
-    auto log_interface = app.CreateThread<LogInterface>(&god.control_memory, 
-                                                        &god.current_state_memory, 
-                                                        &god.waypoint_state_memory, 
-                                                        &god.guidance_output_memory, 
-                                                        &god.fsm_state_memory);
+    auto log_thread = app.CreateThread<LogThread>(&god);
     
 
     // Start the application, which starts all the registered threads (any thread
@@ -84,7 +65,7 @@ int main()
 
     // This function blocks until SIGINT or SIGTERM are received.
     // cactus_rt::WaitForAndHandleTerminationSignal();
-    std::this_thread::sleep_for(std::chrono::seconds(10)); // simulates waiting for the signal
+    std::this_thread::sleep_for(std::chrono::seconds(2)); // simulates waiting for the signal
 
     std::cout << "Caught signal, requesting stop...\n";
 
