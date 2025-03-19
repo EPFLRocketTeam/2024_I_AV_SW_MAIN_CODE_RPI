@@ -11,3 +11,6 @@
 [submodule "2025_I_AV_COM_CLIENT"]
 	path = 2025_I_AV_COM_CLIENT
 	url = https://github.com/EPFLRocketTeam/2025_I_AV_COM_CLIENT
+[submodule "com_client"]
+	path = com_client
+	url = https://github.com/EPFLRocketTeam/2025_I_AV_COM_CLIENT
