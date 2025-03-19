@@ -1,17 +1,17 @@
 #include <cactus_rt/rt.h>
 #include <iostream>
+
 #include "god.h"
 #include "fsm_states.h"
 
 #include "fsm_thread.h"
-#include "drone_thread.h"
 #include "control_thread.h"
 #include "guidance_thread.h"
 #include "navigation_thread.h"
 #include "log_thread.h"
+#include "com_thread.h"
 
 using cactus_rt::App;
-
 
 int main()
 {
@@ -40,21 +40,23 @@ int main()
 
     std::cout << "Creating threads...\n";
     
-    auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
-                                                            &god.control_memory, true);
+    // auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
+    //                                                         &god.control_memory, true);
 
     // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
     //                                                         &god.current_state_memory, 
     //                                                         &god.waypoint_state_memory, 
     //                                                         &god.guidance_output_memory, true);
 
-    auto navigation_thread = app.CreateThread<NavigationThread>(&god.fsm_state_memory,
-                                                                &god.current_state_memory, 
-                                                                true);
+    // auto navigation_thread = app.CreateThread<NavigationThread>(&god.fsm_state_memory,
+    //                                                             &god.current_state_memory, 
+    //                                                             true);
 
-    auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
+    // auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
-    auto log_thread = app.CreateThread<LogThread>(&god);
+    // auto log_thread = app.CreateThread<LogThread>(&god);
+
+    auto com_thread = app.CreateThread<ComThread>(&god, true);
     
 
     // Start the application, which starts all the registered threads (any thread

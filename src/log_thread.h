@@ -15,9 +15,11 @@ public:
     LogThread(GOD*);
     ~LogThread() = default;
 
+protected:
+    LoopControl Loop(int64_t elapsed_ns) noexcept final;
+
 private:
     GOD* god;
-    LoopControl Loop(int64_t elapsed_ns) noexcept final;
     static cactus_rt::CyclicThreadConfig MakeConfig();
 };
 
