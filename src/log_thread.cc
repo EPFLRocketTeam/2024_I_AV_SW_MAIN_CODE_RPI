@@ -12,7 +12,7 @@ LogThread::LogThread(GOD *god)
 CyclicThread::LoopControl LogThread::Loop(int64_t elapsed_ns) noexcept
 {
     std::string data = god->log_data();
-    LOG_INFO(Logger(), "test");
+    LOG_INFO(Logger(), "{}", data);
     return LoopControl::Continue;
 }
 

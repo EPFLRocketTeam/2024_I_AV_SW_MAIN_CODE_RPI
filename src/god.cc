@@ -50,6 +50,7 @@ string GOD::log_data() const
     guidance_output_str += "]";
     data +=  "Guidance Output: {}" + guidance_output_str + (string) "\n";
     data += "--------------------------------------\n";
+    
     return data;
 }
 
