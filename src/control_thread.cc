@@ -127,11 +127,3 @@ Controller ControlThread::ControllerFromJSON(const json &doc)
             M, R, GIMBAL_LIMIT, GIMBAL_RATE_LIMIT,
             MAX_THRUST, THRUST_RATE_LIMIT};
 }
-
-std::ostream& operator<<(std::ostream& os, const ControlInput& input) {
-    os << "{ desired_state: " << input.desired_state 
-       << ", current_state: " << input.current_state
-       << ", setpoint: " << input.setpointSelection
-       << ", inline_thrust: " << input.inline_thrust << " }";
-    return os;
-}

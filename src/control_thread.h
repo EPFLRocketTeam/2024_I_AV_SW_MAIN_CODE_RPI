@@ -17,8 +17,6 @@ struct ControlInput
     double inline_thrust;
 };
 
-std::ostream& operator<<(std::ostream& os, const ControlInput& input);
-
 class ControlThread : public CyclicThread
 {
 public:

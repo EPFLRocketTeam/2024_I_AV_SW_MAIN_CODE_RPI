@@ -103,7 +103,7 @@ void ComThread::ReceiveControlInput(Payload &payload)
         return;
     }
 
-    LOG_INFO(Logger(), "Received control input:  {}", input);
+    LOG_INFO(Logger(), "Received control input: thrust={}, rest_of_the_payload=TODO", input.inline_thrust);
 
     control_input->Write(input);
 }
