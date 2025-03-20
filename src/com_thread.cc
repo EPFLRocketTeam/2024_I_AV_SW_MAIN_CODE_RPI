@@ -8,22 +8,9 @@
 
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
-constexpr bool DEBUG = true;
+constexpr bool DEBUG = false;
 
 using cactus_rt::CyclicThread;
-
-// TODO:
-// - Loopback tests, Teensy et RPI
-// - Sending and receiving control input/output
-// - Adapt control code Teensy side
-// - Drone flight!
-// - Cleanup:
-//  - Initialization in begin() instead of constructor
-//  - Uniform error handling using bool
-//  - Fix tests
-//  - Find source of segfault using debugger (Or is it just due to unhandled exceptions?)
-//    => Remote debugger needed
-//  - Write more tests
 
 ComThread::ComThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output)
     : CyclicThread("ComThread", MakeConfig())
