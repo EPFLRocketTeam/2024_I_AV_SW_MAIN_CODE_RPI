@@ -14,7 +14,7 @@ struct GOD // Global Object Dictionary
     SharedMemory<ControlOutput> control_memory;
 
     // Guidance
-    SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9)
+    SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9) [x, y, z, vx, vy, vz, thrust, theta, phi]
     SharedMemory<std::vector<double>> waypoint_state_memory; // desired state (waypoint) of the drone (9)
     SharedMemory<std::vector<double>> guidance_output_memory; // output of the guidance system (9)
 
