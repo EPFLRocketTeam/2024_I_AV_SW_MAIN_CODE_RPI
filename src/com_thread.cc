@@ -8,22 +8,15 @@
 
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
-constexpr bool DEBUG = false;
 
 using cactus_rt::CyclicThread;
 
 ComThread::ComThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output)
-    : CyclicThread("ComThread", MakeConfig())
+    : CyclicThread("ComThread", MakeConfig()), control_input(control_input), control_output(control_output)
 {
-    // Could use a initializer list instead
-    ComThread::control_input = control_input;
-    ComThread::control_output = control_output;
-
     uart_manager = new CM4UART(BAUDRATE, DEVICE, Logger());
     uart_manager->RegisterHandler((int)PacketId::ControlInput, [this](Payload &payload)
                                   { ReceiveControlInput(payload); });
-    // uart_manager->RegisterHandler((int)PacketId::ControlOutput, [this](Payload &payload)
-    //                               { ReceiveControlOutput(payload); });
 
     bool success = uart_manager->Begin();
     if (!success)
@@ -56,21 +49,8 @@ CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
     uart_manager->ReceiveUARTPackets();
 
-    // ControlInput input = control_input->Read();
-    // SendControlInput(input);
-
     ControlOutput output;
-    if (DEBUG)
-    {
-        output.d1 = 0.1;
-        output.d2 = 0.2;
-        output.thrust = 0.3;
-        output.mz = 0.4;
-    }
-    else
-    {
-        output = control_output->Read();
-    }
+    output = control_output->Read();
 
     SendControlOutput(output);
     uart_manager->SendUARTPackets();
@@ -106,81 +86,16 @@ bool ComThread::SendControlOutput(const ControlOutput &output)
     return true;
 }
 
-// void ComThread::ReceiveControlOutput(Payload &payload)
-// {
-//     ControlOutput output;
-//     bool success = true;
-
-//     success &= payload.ReadDouble(output.d1);
-//     success &= payload.ReadDouble(output.d2);
-//     success &= payload.ReadDouble(output.thrust);
-//     success &= payload.ReadDouble(output.mz);
-
-//     if (!success)
-//     {
-//         LOG_ERROR(Logger(), "Failed to read control output from payload");
-//         return;
-//     }
-
-//     LOG_INFO(Logger(), "Received control output: d1={}, d2={}, thrust={}, mz={}", output.d1, output.d2, output.thrust, output.mz);
-
-//     // control_output->Write(output);
-// }
-
-// bool ComThread::SendControlInput(const ControlInput &input)
-// {
-//     Payload payload;
-//     bool success = true;
-
-//     // Write state
-//     success &= WriteVec3(payload, input.state.attitude);
-//     success &= WriteVec3(payload, input.state.rate);
-//     success &= payload.WriteInt(input.state.attitude_count);
-//     success &= payload.WriteInt(input.state.rate_count);
-
-//     // Write remote input
-//     success &= WriteVec3(payload, input.remote_input.att_ref);
-//     success &= payload.WriteDouble(input.remote_input.inline_thrust);
-//     success &= payload.WriteDouble(input.remote_input.yaw_rate_ref);
-//     success &= payload.WriteBool(input.remote_input.arm);
-
-//     if (!success)
-//     {
-//         LOG_ERROR(Logger(), "Failed to write control input to payload");
-//         return false;
-//     }
-
-//     success = uart_manager->SendUARTPacket((int)PacketId::ControlInput, payload);
-
-//     if (!success)
-//     {
-//         LOG_ERROR(Logger(), "Failed to send control input");
-//         return false;
-//     }
-
-//     LOG_INFO(Logger(), "Sent control input:  att_count={}, rate_count={}, inline_thrust={}, yaw_rate_ref={}, arm={}",
-//              input.state.attitude_count, input.state.rate_count,
-//              input.remote_input.inline_thrust, input.remote_input.yaw_rate_ref, input.remote_input.arm);
-
-//     return true;
-// }
-
 void ComThread::ReceiveControlInput(Payload &payload)
 {
     bool success = true;
     ControlInput input;
 
     // Read state
-    success &= ReadVec3(payload, input.state.attitude);
-    success &= ReadVec3(payload, input.state.rate);
-    success &= payload.ReadInt(input.state.attitude_count);
-    success &= payload.ReadInt(input.state.rate_count);
-
-    // Read remote input
-    success &= ReadVec3(payload, input.remote_input.att_ref);
-    success &= payload.ReadDouble(input.remote_input.inline_thrust);
-    success &= payload.ReadDouble(input.remote_input.yaw_rate_ref);
-    success &= payload.ReadBool(input.remote_input.arm);
+    success &= ReadState(payload, input.desired_state);
+    success &= ReadState(payload, input.current_state);
+    success &= ReadSetpointSelection(payload, input.setpointSelection);
+    success &= payload.ReadDouble(input.inline_thrust);
 
     if (!success)
     {
@@ -188,17 +103,12 @@ void ComThread::ReceiveControlInput(Payload &payload)
         return;
     }
 
-    LOG_INFO(Logger(), "Received control input:  att_count={}, rate_count={}, inline_thrust={}, yaw_rate_ref={}, arm={}",
-             input.state.attitude_count, input.state.rate_count,
-             input.remote_input.inline_thrust, input.remote_input.yaw_rate_ref, input.remote_input.arm);
+    LOG_INFO(Logger(), "Received control input:  {}", input);
 
-    if (!DEBUG)
-    {
-        control_input->Write(input);
-    }
+    control_input->Write(input);
 }
 
-bool ComThread::WriteVec3(Payload &payload, Vec3 vec)
+bool ComThread::WriteVec3(Payload &payload, const Vec3 &vec)
 {
     bool success = true;
     success &= payload.WriteDouble(vec.x);
@@ -229,5 +139,123 @@ bool ComThread::ReadVec3(Payload &payload, Vec3 &vec)
     }
 
     vec = Vec3(x, y, z);
+    return true;
+}
+
+bool ComThread::ReadState(Payload &payload, State &state)
+{
+    bool success = true;
+    success &= ReadVec3(payload, state.pos);
+    success &= ReadVec3(payload, state.vel);
+    success &= ReadVec3(payload, state.att);
+    success &= ReadVec3(payload, state.rate);
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to read state from payload");
+        return false;
+    }
+
+    return true;
+}
+
+bool ComThread::WriteState(Payload &payload, const State &state)
+{
+    bool success = true;
+    success &= WriteVec3(payload, state.pos);
+    success &= WriteVec3(payload, state.vel);
+    success &= WriteVec3(payload, state.att);
+    success &= WriteVec3(payload, state.rate);
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to write state to payload");
+        return false;
+    }
+
+    return true;
+}
+
+bool ComThread::WriteSetpointSelection(Payload &payload, const SetpointSelection &setpoint)
+{
+    // Pack all 12 boolean values into 2 bytes to minimize payload size
+    uint8_t buffer[2] = {0, 0};
+
+    // Pack posSPActive (3 bits)
+    if (setpoint.posSPActive[0])
+        buffer[0] |= (1 << 0);
+    if (setpoint.posSPActive[1])
+        buffer[0] |= (1 << 1);
+    if (setpoint.posSPActive[2])
+        buffer[0] |= (1 << 2);
+
+    // Pack velSPActive (3 bits)
+    if (setpoint.velSPActive[0])
+        buffer[0] |= (1 << 3);
+    if (setpoint.velSPActive[1])
+        buffer[0] |= (1 << 4);
+    if (setpoint.velSPActive[2])
+        buffer[0] |= (1 << 5);
+
+    // Pack attSPActive (3 bits across byte boundary)
+    if (setpoint.attSPActive[0])
+        buffer[0] |= (1 << 6);
+    if (setpoint.attSPActive[1])
+        buffer[0] |= (1 << 7);
+    if (setpoint.attSPActive[2])
+        buffer[1] |= (1 << 0);
+
+    // Pack rateSPActive (3 bits)
+    if (setpoint.rateSPActive[0])
+        buffer[1] |= (1 << 1);
+    if (setpoint.rateSPActive[1])
+        buffer[1] |= (1 << 2);
+    if (setpoint.rateSPActive[2])
+        buffer[1] |= (1 << 3);
+
+    // Write the packed bytes to the payload
+    bool success = payload.WriteBytes(buffer, sizeof(buffer));
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to write SetpointSelection to payload");
+        return false;
+    }
+
+    return true;
+}
+
+bool ComThread::ReadSetpointSelection(Payload &payload, SetpointSelection &setpoint)
+{
+    // Read 2 bytes from the payload
+    uint8_t buffer[2];
+    bool success = payload.ReadBytes(buffer, sizeof(buffer));
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to read SetpointSelection from payload");
+        return false;
+    }
+
+    // Unpack posSPActive
+    setpoint.posSPActive[0] = (buffer[0] & (1 << 0)) != 0;
+    setpoint.posSPActive[1] = (buffer[0] & (1 << 1)) != 0;
+    setpoint.posSPActive[2] = (buffer[0] & (1 << 2)) != 0;
+
+    // Unpack velSPActive
+    setpoint.velSPActive[0] = (buffer[0] & (1 << 3)) != 0;
+    setpoint.velSPActive[1] = (buffer[0] & (1 << 4)) != 0;
+    setpoint.velSPActive[2] = (buffer[0] & (1 << 5)) != 0;
+
+    // Unpack attSPActive
+    setpoint.attSPActive[0] = (buffer[0] & (1 << 6)) != 0;
+    setpoint.attSPActive[1] = (buffer[0] & (1 << 7)) != 0;
+    setpoint.attSPActive[2] = (buffer[1] & (1 << 0)) != 0;
+
+    // Unpack rateSPActive
+    setpoint.rateSPActive[0] = (buffer[1] & (1 << 1)) != 0;
+    setpoint.rateSPActive[1] = (buffer[1] & (1 << 2)) != 0;
+    setpoint.rateSPActive[2] = (buffer[1] & (1 << 3)) != 0;
+
     return true;
 }

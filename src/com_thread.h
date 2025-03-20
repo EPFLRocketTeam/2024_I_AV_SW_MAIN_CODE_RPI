@@ -24,11 +24,18 @@ class ComThread : public CyclicThread
 
     bool SendControlOutput(const ControlOutput &output);
     void ReceiveControlOutput(Payload &payload);
+    
     bool SendControlInput(const ControlInput &input);
     void ReceiveControlInput(Payload &payload);
 
-    bool WriteVec3(Payload &payload, Vec3 vec);
+    bool WriteVec3(Payload &payload, const Vec3 &vec);
     bool ReadVec3(Payload &payload, Vec3 &vec);
+
+    bool WriteState(Payload &payload, const State &state);
+    bool ReadState(Payload &payload, State &state);
+
+    bool WriteSetpointSelection(Payload &payload, const SetpointSelection &setpointSelection);
+    bool ReadSetpointSelection(Payload &payload, SetpointSelection &setpointSelection);
 
     enum class PacketId
     {

@@ -2,32 +2,22 @@
 #define CONTROL_THREAD_H
 
 #include <cactus_rt/rt.h>
+#include <json.hpp>
 #include "DroneController.h"
 #include "shared_memory.h"
 
 using cactus_rt::CyclicThread;
-
-struct DroneState
-{
-    Vec3 attitude = {0, 0, 0}; // in °
-    Vec3 rate = {0, 0, 0};     // in °/s
-    int attitude_count = 0;
-    int rate_count = 0;
-};
-
-struct AttRemoteInput
-{
-    Vec3 att_ref = {0, 0, 0}; // in °
-    double inline_thrust;
-    double yaw_rate_ref;
-    bool arm = false;
-};
+using json = nlohmann::json;
 
 struct ControlInput
 {
-    DroneState state;
-    AttRemoteInput remote_input;
+    State desired_state;
+    State current_state;
+    SetpointSelection setpointSelection;
+    double inline_thrust;
 };
+
+std::ostream& operator<<(std::ostream& os, const ControlInput& input);
 
 class ControlThread : public CyclicThread
 {
@@ -38,8 +28,10 @@ protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
 
 private:
+    Controller ControllerFromFile(const std::string &file_path);
+    Controller ControllerFromJSON(const json& doc);
     static cactus_rt::CyclicThreadConfig MakeConfig();
-    Controller controller = DRONE_CONTROLLER;
+    std::unique_ptr<Controller> controller;
     SharedMemory<ControlInput>* control_input;
     SharedMemory<ControlOutput>* control_output;
 };
