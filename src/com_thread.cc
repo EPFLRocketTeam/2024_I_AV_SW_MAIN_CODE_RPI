@@ -51,8 +51,8 @@ CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 
     ControlOutput output;
     output = control_output->Read();
-
     SendControlOutput(output);
+    
     uart_manager->SendUARTPackets();
 
     return LoopControl::Continue;
@@ -92,6 +92,7 @@ void ComThread::ReceiveControlInput(Payload &payload)
     ControlInput input;
 
     // Read state
+    success &= payload.ReadBool(input.armed);
     success &= ReadState(payload, input.desired_state);
     success &= ReadState(payload, input.current_state);
     success &= ReadSetpointSelection(payload, input.setpointSelection);
@@ -103,7 +104,7 @@ void ComThread::ReceiveControlInput(Payload &payload)
         return;
     }
 
-    LOG_INFO(Logger(), "Received control input: thrust={}, rest_of_the_payload=TODO", input.inline_thrust);
+    LOG_INFO(Logger(), "Received control input: armed={}, thrust={}, rest_of_the_payload=TODO", input.armed, input.inline_thrust);
 
     control_input->Write(input);
 }

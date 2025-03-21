@@ -16,8 +16,16 @@ ControlThread::ControlThread(SharedMemory<ControlInput> *control_input, SharedMe
 CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
 {
     ControlInput input = control_input->Read();
-    ControlOutput output = controller->ExhaustiveControl(input.desired_state, input.current_state, input.setpointSelection, input.inline_thrust);
-    control_output->Write(output);
+    if (input.armed)
+    {
+        ControlOutput output = controller->ExhaustiveControl(input.desired_state, input.current_state, input.setpointSelection, input.inline_thrust);
+        control_output->Write(output);
+    }
+    else
+    {
+        controller->reset();
+        control_output->Write({0.0, 0.0, 0.0, 0.0});
+    }
 
     return LoopControl::Continue;
 }
@@ -122,6 +130,8 @@ Controller ControlThread::ControllerFromJSON(const json &doc)
         D[i] = rate_d[i].get<double>();
     }
     const PID rateControl = {P, I, D, Controller::RATE_DT, {TORQUE_LIMIT_XY, TORQUE_LIMIT_XY, TORQUE_LIMIT_Z}, {-0.0, 0.0, 0.}};
+
+    LOG_INFO(Logger(), "Successfully loaded controller from file: {}", TUNING_FILE_NAME);
 
     return {rateControl, attControl, velControl, posControl,
             M, R, GIMBAL_LIMIT, GIMBAL_RATE_LIMIT,

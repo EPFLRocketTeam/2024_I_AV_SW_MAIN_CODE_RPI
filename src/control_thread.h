@@ -11,10 +11,11 @@ using json = nlohmann::json;
 
 struct ControlInput
 {
-    State desired_state;
-    State current_state;
-    SetpointSelection setpointSelection;
-    double inline_thrust;
+    bool armed;                          // if the drone is armed
+    State desired_state;                 // the desired state of the drone
+    State current_state;                 // the current state of the drone
+    SetpointSelection setpointSelection; // the setpoint selection
+    double inline_thrust;                // the inline thrust
 };
 
 class ControlThread : public CyclicThread
