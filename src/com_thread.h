@@ -1,27 +1,32 @@
 #ifndef COM_THREAD_H
 #define COM_THREAD_H
 
-#include <cactus_rt/rt.h>
 #include "CM4UART.h"
+#include "Packets.h"
 #include "shared_memory.h"
-#include "DroneController.h"
-#include "god.h"
+#include <cactus_rt/rt.h>
 
 using cactus_rt::CyclicThread;
 
 class ComThread : public CyclicThread
 {
-public:
-    ComThread(GOD*, bool = false);
+  public:
+    ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output);
+    ~ComThread();
 
-protected:
+  protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
 
-private:
-    GOD* god;
-    CM4UART uart;
-    bool debug;
+  private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
+
+    bool SendControlOutput(const ControlOutputPacket &output);
+    void ReceiveControlInput(Payload &payload);
+
+    SharedMemory<ControlInputPacket> *control_input;
+    SharedMemory<ControlOutputPacket> *control_output;
+
+    CM4UART *uart_manager;
 };
 
 #endif // COM_THREAD_H

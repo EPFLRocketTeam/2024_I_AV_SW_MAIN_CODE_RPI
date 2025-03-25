@@ -32,16 +32,13 @@ else()
     message(STATUS "Compiling for the current machine")
 endif()
 
+option(ENABLE_TESTS "Enable test compilation" OFF)
+
 project(maincode)
 
-# Add cactus_rt, a real-time library
 add_subdirectory(cactus_rt)
-
-### Add subdirectories for integrations here ##
 add_subdirectory(com_client)
+add_subdirectory(json)
 add_subdirectory(control/drone_control)
-add_subdirectory(guidance)
-
-# Add the main executable
 add_subdirectory(src)
 

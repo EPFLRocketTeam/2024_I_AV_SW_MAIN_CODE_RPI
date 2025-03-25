@@ -1,25 +1,23 @@
 #include "com_thread.h"
-#include "shared_memory.h"
-#include "DroneController.h"
-#include <cactus_rt/rt.h>
+#include <fcntl.h>   // File control
+#include <termios.h> // Terminal I/O
 
 // using cactus_rt::CyclicThread;
 
-ComThread::ComThread(GOD *god, bool debug) 
- : CyclicThread("ComThread", MakeConfig()), god(god), uart(115200, "/dev/ttyS0", Logger()), debug(debug)
+using cactus_rt::CyclicThread;
+
+ComThread::ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output)
+    : CyclicThread("ComThread", MakeConfig()), control_input(control_input), control_output(control_output)
 {
-    uart.Begin();
+    uart_manager = new CM4UART(BAUDRATE, DEVICE, Logger());
+    uart_manager->RegisterHandler((int)PacketId::ControlInput, [this](Payload &payload)
+                                  { ReceiveControlInput(payload); });
 
-    if (debug) std::cout << "ComThread created\n";
-}
-
-CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
-{
-    unsigned char ta[] = "123";
-    unsigned char* t = ta;
-
-    // uart.Send(ta, 4);
-    return LoopControl::Continue;
+    bool success = uart_manager->Begin();
+    if (!success)
+    {
+        throw std::runtime_error("Failed to initialize UART");
+    }
 }
 
 cactus_rt::CyclicThreadConfig ComThread::MakeConfig()
@@ -35,4 +33,62 @@ cactus_rt::CyclicThreadConfig ComThread::MakeConfig()
     // Run the thread with SCHED_FIFO at real-time priority of 90.
     config.SetFifoScheduler(90);
     return config;
+}
+
+ComThread::~ComThread()
+{
+    delete uart_manager;
+}
+
+CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
+{
+    uart_manager->ReceiveUARTPackets();
+
+    ControlOutputPacket output_packet = control_output->Read();
+    SendControlOutput(output_packet);
+    
+    uart_manager->SendUARTPackets();
+
+    return LoopControl::Continue;
+}
+
+bool ComThread::SendControlOutput(const ControlOutputPacket &output_packet)
+{
+    Payload payload;
+    bool success;
+    ControlOutputPacket control_output_packet = {};
+
+    success = payload.WriteControlOutputPacket(output_packet);
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to write control output to payload");
+        return false;
+    }
+
+    success = uart_manager->SendUARTPacket((int)PacketId::ControlOutput, payload);
+
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to send control output");
+        return false;
+    }
+
+    LOG_INFO(Logger(), "Sent control output");
+
+    return true;
+}
+
+void ComThread::ReceiveControlInput(Payload &payload)
+{
+    ControlInputPacket input_packet;
+    bool success = payload.ReadControlInputPacket(input_packet);
+    if (!success)
+    {
+        LOG_ERROR(Logger(), "Failed to read control input from payload");
+        return;
+    }
+
+    LOG_INFO(Logger(), "Received control input");
+
+    control_input->Write(input_packet);
 }
