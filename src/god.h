@@ -7,11 +7,13 @@
 #include <string>
 #include "fsm_states.h"
 #include "control_thread.h"
+#include "Packets.h"
 
 struct GOD // Global Object Dictionary
 {
     // Control
-    SharedMemory<ControlOutput> control_memory;
+    SharedMemory<ControlInputPacket> control_input;
+    SharedMemory<ControlOutputPacket> control_output;
 
     // Guidance
     SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9) [x, y, z, vx, vy, vz, thrust, theta, phi]

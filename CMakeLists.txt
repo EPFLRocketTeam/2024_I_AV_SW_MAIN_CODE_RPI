@@ -40,5 +40,6 @@ add_subdirectory(cactus_rt)
 add_subdirectory(com_client)
 add_subdirectory(json)
 add_subdirectory(control/drone_control)
+add_subdirectory(guidance)
 add_subdirectory(src)
 

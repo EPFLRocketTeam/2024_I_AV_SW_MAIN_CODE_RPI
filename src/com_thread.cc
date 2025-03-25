@@ -4,6 +4,9 @@
 
 // using cactus_rt::CyclicThread;
 
+constexpr int BAUDRATE = B115200;
+constexpr const char *DEVICE = "/dev/serial0";
+
 using cactus_rt::CyclicThread;
 
 ComThread::ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output)

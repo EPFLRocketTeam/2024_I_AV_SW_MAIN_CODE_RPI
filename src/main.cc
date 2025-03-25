@@ -21,21 +21,15 @@
 using cactus_rt::App;
 
 int main()
-{
-    // Cactus_rt app and logging configuration
+{   
+     // Create a cactus_rt app configuration
     cactus_rt::AppConfig app_config;
-    // Enable strict timestamp order - this will be slower, but logs will always appear in order
     app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
+    app_config.logger_config.backend_thread_cpu_affinity = 1;
+    // app_config.logger_config.default_handlers.emplace_back(quill::file_handler("/home/ert/2024_I_AV_SW_MAIN_CODE_RPI/log.txt"));
 
-    // Set the background logging thread CPU affinity
-    // app_config.logger_config.backend_thread_cpu_affinity = 1;
+    App app("RocketApp", app_config); 
 
-    // Further logger configuration can be done here
-    // See https://quillcpp.readthedocs.io/en/latest/quick_start.html#logging-to-file
-    // for more information on how to log to a file
-
-    // Create the cactus_rt application
-    App app("MainCodeRpi", app_config);
 
     // Main thread logger
     auto main_logger = quill::create_logger("MainThread");
@@ -45,11 +39,6 @@ int main()
     cactus_rt::SetUpTerminationSignalHandler();
 
     // Global Object Dictionary
-    struct GOD
-    {
-        SharedMemory<ControlInputPacket> control_input;
-        SharedMemory<ControlOutputPacket> control_output;
-    };
     GOD god;
 
     // UART Communication Thread
@@ -71,22 +60,12 @@ int main()
     // Start the application, which starts all the registered threads
     app.Start();
     LOG_INFO(main_logger, "Started threads");
-    GOD god; // initialise the global object dictionary
 
     // Sets up the signal handlers for SIGINT and SIGTERM (by default).
     cactus_rt::SetUpTerminationSignalHandler();
 
     // We first create cactus_rt App object.
     
-
-    // Create a cactus_rt app configuration
-    cactus_rt::AppConfig app_config;
-    app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
-    app_config.logger_config.backend_thread_cpu_affinity = 1;
-    // app_config.logger_config.default_handlers.emplace_back(quill::file_handler("/home/ert/2024_I_AV_SW_MAIN_CODE_RPI/log.txt"));
-
-    App app("RocketApp", app_config); 
-
     // quill::Config cfg;
     // cfg.default_handlers.emplace_back(quill::file_handler("log.txt"));
     // quill::configure(cfg);
@@ -110,10 +89,7 @@ int main()
 
     // auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
-    // auto log_thread = app.CreateThread<LogThread>(&god);
-
-    auto com_thread = app.CreateThread<ComThread>(&god, true);
-    
+    // auto log_thread = app.CreateThread<LogThread>(&god);    
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
