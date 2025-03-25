@@ -6,7 +6,7 @@
 using cactus_rt::CyclicThread;
 #define TUNING_FILE_NAME "drone_config.json"
 
-ControlThread::ControlThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output)
+ControlThread::ControlThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output)
     : CyclicThread("ControlThread", MakeConfig()), control_input(control_input), control_output(control_output)
 {
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
@@ -15,16 +15,24 @@ ControlThread::ControlThread(SharedMemory<ControlInput> *control_input, SharedMe
 
 CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
 {
-    ControlInput input = control_input->Read();
-    if (input.armed)
+    ControlInputPacket input_packet = control_input->Read();
+    if (input_packet.armed)
     {
-        ControlOutput output = controller->ExhaustiveControl(input.desired_state, input.current_state, input.setpointSelection, input.inline_thrust);
-        control_output->Write(output);
+        ControlOutput output = controller->ExhaustiveControl(input_packet.desired_state, input_packet.current_state, input_packet.setpointSelection, input_packet.inline_thrust);
+        
+        ControlOutputPacket output_packet = {
+            .timestamp = input_packet.timestamp,
+            .d1 = output.d1,
+            .d2 = output.d2,
+            .avg_throttle = output.thrust,
+            .throttle_diff = output.mz
+        };
+        control_output->Write(output_packet);
     }
     else
     {
         controller->reset();
-        control_output->Write({0.0, 0.0, 0.0, 0.0});
+        control_output->Write({0.0, 0.0, 0.0, 0.0, 0.0});
     }
 
     return LoopControl::Continue;

@@ -5,6 +5,7 @@
 #include <json.hpp>
 #include "DroneController.h"
 #include "shared_memory.h"
+#include "Packets.h"
 
 using cactus_rt::CyclicThread;
 using json = nlohmann::json;
@@ -21,7 +22,7 @@ struct ControlInput
 class ControlThread : public CyclicThread
 {
 public:
-    ControlThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output);
+    ControlThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
@@ -31,8 +32,8 @@ private:
     Controller ControllerFromJSON(const json& doc);
     static cactus_rt::CyclicThreadConfig MakeConfig();
     std::unique_ptr<Controller> controller;
-    SharedMemory<ControlInput>* control_input;
-    SharedMemory<ControlOutput>* control_output;
+    SharedMemory<ControlInputPacket>* control_input;
+    SharedMemory<ControlOutputPacket>* control_output;
 };
 
 #endif // CONTROL_THREAD_H

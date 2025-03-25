@@ -2,8 +2,7 @@
 #define COM_THREAD_H
 
 #include "CM4UART.h"
-#include "DroneController.h"
-#include "control_thread.h"
+#include "Packets.h"
 #include "shared_memory.h"
 #include <cactus_rt/rt.h>
 
@@ -13,7 +12,7 @@ typedef unsigned char byte;
 class ComThread : public CyclicThread
 {
   public:
-    ComThread(SharedMemory<ControlInput> *control_input, SharedMemory<ControlOutput> *control_output);
+    ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output);
     ~ComThread();
 
   protected:
@@ -22,29 +21,11 @@ class ComThread : public CyclicThread
   private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
 
-    bool SendControlOutput(const ControlOutput &output);
-    void ReceiveControlOutput(Payload &payload);
-    
-    bool SendControlInput(const ControlInput &input);
+    bool SendControlOutput(const ControlOutputPacket &output);
     void ReceiveControlInput(Payload &payload);
 
-    bool WriteVec3(Payload &payload, const Vec3 &vec);
-    bool ReadVec3(Payload &payload, Vec3 &vec);
-
-    bool WriteState(Payload &payload, const State &state);
-    bool ReadState(Payload &payload, State &state);
-
-    bool WriteSetpointSelection(Payload &payload, const SetpointSelection &setpointSelection);
-    bool ReadSetpointSelection(Payload &payload, SetpointSelection &setpointSelection);
-
-    enum class PacketId
-    {
-        ControlInput = 1,
-        ControlOutput,
-    };
-
-    SharedMemory<ControlInput> *control_input;
-    SharedMemory<ControlOutput> *control_output;
+    SharedMemory<ControlInputPacket> *control_input;
+    SharedMemory<ControlOutputPacket> *control_output;
 
     CM4UART *uart_manager;
 };

@@ -1,5 +1,6 @@
 #include "com_thread.h"
 #include "control_thread.h"
+#include "Packets.h"
 #include "quill/Quill.h" // For Logger
 #include "shared_memory.h"
 #include <cactus_rt/rt.h>
@@ -36,8 +37,8 @@ int main()
     // Global Object Dictionary
     struct GOD
     {
-        SharedMemory<ControlInput> control_input;
-        SharedMemory<ControlOutput> control_output;
+        SharedMemory<ControlInputPacket> control_input;
+        SharedMemory<ControlOutputPacket> control_output;
     };
     GOD god;
 
