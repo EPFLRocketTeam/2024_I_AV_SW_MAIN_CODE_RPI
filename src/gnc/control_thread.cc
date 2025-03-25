@@ -8,12 +8,10 @@ using cactus_rt::CyclicThread;
 
 ControlThread::ControlThread(SharedMemory<FSMStates> *fsm_state_memory,
                              SharedMemory<ControlInputPacket> *control_input,
-                             SharedMemory<ControlOutputPacket> *control_output,
-                             bool debug)
-    : CyclicThreadStateDependant(fsm_state_memory, "ControlThread", MakeConfig(), debug),
+                             SharedMemory<ControlOutputPacket> *control_output)
+    : CyclicThreadStateDependant(fsm_state_memory, "ControlThread", MakeConfig()),
       control_input(control_input),
-      control_output(control_output),
-      debug(debug)
+      control_output(control_output)
 {
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
     controller->reset();
@@ -51,10 +49,7 @@ cactus_rt::CyclicThreadConfig ControlThread::MakeConfig()
     cactus_rt::CyclicThreadConfig config;
 
     // Run at 100 Hz.
-    // config.period_ns = 10'000'000;
-
-    // Run at 2 Hz.
-    config.period_ns = 500'000'000;
+    config.period_ns = 10'000'000;
 
     // Pin this thread on CPU core #3
     config.cpu_affinity = std::vector<size_t>{3};

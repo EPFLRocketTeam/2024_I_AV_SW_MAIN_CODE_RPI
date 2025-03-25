@@ -2,8 +2,6 @@
 #include <fcntl.h>   // File control
 #include <termios.h> // Terminal I/O
 
-// using cactus_rt::CyclicThread;
-
 using cactus_rt::CyclicThread;
 
 ComThread::ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output)
