@@ -20,13 +20,15 @@ CyclicThread::LoopControl ControlThread::Loop(int64_t elapsed_ns) noexcept
     {
         ControlOutput output = controller->ExhaustiveControl(input_packet.desired_state, input_packet.current_state, input_packet.setpointSelection, input_packet.inline_thrust);
         
+        // TODO: To raw and to degrees conversion should be done here
         ControlOutputPacket output_packet = {
-            .timestamp = input_packet.timestamp,
-            .d1 = output.d1,
-            .d2 = output.d2,
-            .avg_throttle = output.thrust,
-            .throttle_diff = output.mz
+            input_packet.timestamp,
+            output.d1,
+            output.d2,
+            output.thrust,
+            output.mz
         };
+        
         control_output->Write(output_packet);
     }
     else
