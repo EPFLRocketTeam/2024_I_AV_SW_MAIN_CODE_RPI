@@ -12,9 +12,9 @@ using namespace std;
 using json = nlohmann::json;
 using cactus_rt::CyclicThread;
 
-FCFThread::FCFThread(SharedMemory<ControlOutput> *control_memory, SharedMemory<FSMStates> *fsm_memory, const string& filename)
-    : CyclicThread("FCFThread", MakeConfig()), control_memory(control_memory), fsm_memory(fsm_memory), filename(filename) {
-    lecture();
+FCFThread::FCFThread(SharedMemory<FSMStates> *control_memory, SharedMemory<FSMStates> *fsm_memory, const string& filename)
+    : CyclicThread("FCFThread", MakeConfig()), control_memory(control_memory), fsm_memory(fsm_memory), filename(filename), timer(0) {
+    points.clear();
 }
 
 // Gestion de la boucle d'exécution
@@ -22,17 +22,19 @@ CyclicThread::LoopControl FCFThread::Loop(int64_t elapsed_ns) noexcept {
     FSMStates current_state = fsm_memory->Read(); // Lire l'état actuel de la mémoire partagée
     
     switch (current_state) {
-        case FSMStates::MANUAL_FLIGHT:
-            gestionManualFlight();
+        case FSMStates::INIT:
+            lecturePoints();
+            break;
+        case FSMStates::IDLE:
+            initialiserTimer();
             break;
         case FSMStates::AUTOMATIC_FLIGHT:
-            gestionAutomaticFlight();
+            verifierTemps();
             break;
         default:
             break;
     }
 
-    affichage();
     return LoopControl::Continue;
 }
 
@@ -44,8 +46,8 @@ cactus_rt::CyclicThreadConfig FCFThread::MakeConfig() {
     return config;
 }
 
-// Lecture du fichier JSON
-bool FCFThread::lecture() {
+// Lecture du fichier JSON pour extraire les points et le temps
+bool FCFThread::lecturePoints() {
     ifstream fichier(filename);
     if (!fichier) {
         cerr << "Erreur : impossible d'ouvrir le fichier " << filename << endl;
@@ -56,35 +58,32 @@ bool FCFThread::lecture() {
     fichier >> data;
     
     try {
-        position = data.at("position").get<vector<double>>();
-        vitesse = data.at("vitesse").get<vector<double>>();
-        thrust = data.at("thrust").get<double>();
-        pitch = data.at("pitch").get<double>();
-        yaw = data.at("yaw").get<double>();
+        points = data.at("points").get<vector<vector<double>>>(); // Liste de points 3D
+        times = data.at("times").get<vector<double>>(); // Liste des temps
     } catch (const json::exception& e) {
         cerr << "Erreur lors de la lecture des données JSON : " << e.what() << endl;
         return false;
     }
     
+    cout << "[INIT] Points et temps chargés depuis le JSON." << endl;
     return true;
 }
 
-// Gestion du mode MANUAL_FLIGHT
-void FCFThread::gestionManualFlight() {
-    cout << "[MANUAL_FLIGHT] Contrôle manuel actif." << endl;
-    // Ajouter ici les traitements spécifiques au mode manuel
+// Initialisation du timer dans l'état IDLE
+void FCFThread::initialiserTimer() {
+    timer = 0;
+    cout << "[IDLE] Timer initialisé à 0." << endl;
 }
 
-// Gestion du mode AUTOMATIC_FLIGHT
-void FCFThread::gestionAutomaticFlight() {
-    cout << "[AUTOMATIC_FLIGHT] Mode automatique actif." << endl;
-    calcul(); // Appelle la fonction de calcul automatique
+// Vérification du timer dans AUTOMATIC_FLIGHT
+void FCFThread::verifierTemps() {
+    if (timer < times.size()) {
+        double expected_time = times[timer];
+        if (abs(expected_time - timer) > 1.0) {
+            cerr << "[ERREUR] Temps actuel: " << timer << ", attendu: " << expected_time << endl;
+        } else {
+            cout << "[AUTOMATIC_FLIGHT] Temps validé: " << timer << endl;
+        }
+        timer++;
+    }
 }
-
-// Gestion du temps
-double FCFThread::temps() {
-    time += 0.01;
-    return time;
-}
-
-
