@@ -17,6 +17,7 @@
 #include "navigation_thread.h"
 #include "log_thread.h"
 #include "com_thread.h"
+#include "fcf_module_thread.h"
 
 using cactus_rt::App;
 
@@ -89,7 +90,10 @@ int main()
 
     // auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
-    // auto log_thread = app.CreateThread<LogThread>(&god);    
+    // auto log_thread = app.CreateThread<LogThread>(&god);  
+    // auto fcf_thread = app.CreatThread<FCFThread>(&god.fsm_state_memory,
+    //                                              &god.guidance_waypoint_output_memory,
+    //                                              &god.current_state_memory, true)
 
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.

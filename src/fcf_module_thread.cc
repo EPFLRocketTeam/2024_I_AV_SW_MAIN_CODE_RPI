@@ -77,13 +77,35 @@ void FCFThread::initialiserTimer() {
 
 // Vérification du timer dans AUTOMATIC_FLIGHT
 void FCFThread::verifierTemps() {
-    if (timer < times.size()) {
-        double expected_time = times[timer];
-        if (abs(expected_time - timer) > 1.0) {
-            cerr << "[ERREUR] Temps actuel: " << timer << ", attendu: " << expected_time << endl;
-        } else {
-            cout << "[AUTOMATIC_FLIGHT] Temps validé: " << timer << endl;
+    if (i < times.size()) { // Vérifie qu'on ne dépasse pas la taille du vecteur
+        double expected_time = times[i];
+
+        if (timer < expected_time) {
+            // On ne fait rien, on attend que le timer atteigne le temps attendu
+            return;
         }
-        timer++;
+
+        if (timer == expected_time) {
+            cout << "[AUTOMATIC_FLIGHT] Vérification du point " << i << "..." << endl;
+
+            bool point_correct = true; // Pour le moment, on suppose qu'il est correct
+
+            if (point_correct) {
+                cout << "[AUTOMATIC_FLIGHT] Point " << i << " validé." << endl;
+                i++; // Passer au point suivant
+            } else {
+                cout << "[AUTOMATIC_FLIGHT] Point " << i << " incorrect. Mise à jour des points..." << endl;
+
+                // Remplacer tous les points ayant la même coordonnée Z par z = 0
+                double incorrect_z = points[i][2]; // Récupère la valeur Z du point incorrect
+                for (auto &point : points) {
+                    if (point[2] == incorrect_z) {
+                        point[2] = 0;
+                    }
+                }
+            }
+        }
     }
+    timer += 0.01; // Incrémente le timer de 0.01 sec (car le thread tourne à 100 Hz)
 }
+

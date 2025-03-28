@@ -12,7 +12,7 @@ using cactus_rt::CyclicThread;
 class FCFThread : public CyclicThread
 {
 public:
-    FCFThread(SharedMemory<ControlOutput> *control_memory, SharedMemory<FSMStates> *fsm_memory, const std::string &filename);
+    FCFThread(SharedMemory<FSMStates> *control_memory, SharedMemory<FSMStates> *fsm_memory, const std::string &filename);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
@@ -21,14 +21,15 @@ private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
 
     // Pointeurs vers la mémoire partagée
-    SharedMemory<ControlOutput> *control_memory;
+    SharedMemory<FSMStates> *control_memory;
     SharedMemory<FSMStates> *fsm_memory;
 
     // Fichier JSON contenant les points de vol
     std::string filename;
 
     // Variables pour la gestion des points et du temps
-    size_t timer;  // Compteur pour suivre le temps
+    double timer;  // Chronomètre (précision 0.01s)
+    size_t i;      // Index du temps attendu dans `times`
     std::vector<std::vector<double>> points; // Liste des points 3D
     std::vector<double> times; // Liste des temps associés
 
