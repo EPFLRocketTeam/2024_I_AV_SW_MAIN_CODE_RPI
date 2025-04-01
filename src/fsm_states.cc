@@ -7,5 +7,6 @@ std::unordered_map<FSMStates, std::string> FSMStatesToString =
     {FSMStates::ARMED, "ARMED"},
     {FSMStates::MANUAL_FLIGHT, "MANUAL_FLIGHT"},
     {FSMStates::AUTOMATIC_FLIGHT, "AUTOMATIC_FLIGHT"},
+    {FSMStates::FORCED_LANDING, "FORCED_LANDING"},
     {FSMStates::ABORT, "ABORT"}
 };

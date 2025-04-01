@@ -12,6 +12,7 @@ enum class FSMStates {
     ARMED,
     MANUAL_FLIGHT,
     AUTOMATIC_FLIGHT,
+    FORCED_LANDING,
     ABORT
 };
 
