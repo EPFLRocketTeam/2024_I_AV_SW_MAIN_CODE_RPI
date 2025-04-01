@@ -12,7 +12,11 @@ using cactus_rt::CyclicThread;
 class FCFThread : public CyclicThread
 {
 public:
-    FCFThread(SharedMemory<FSMStates> *control_memory, SharedMemory<FSMStates> *fsm_memory, const std::string &filename);
+    FCFThread(SharedMemory<FSMStates> *control_memory, 
+              SharedMemory<FSMStates> *fsm_memory, 
+              SharedMemory<std::vector<double>> *current_state_memory, 
+              SharedMemory<std::vector<double>> *guidance_waypoint_output_memory, 
+              const std::string &filename);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
@@ -23,20 +27,23 @@ private:
     // Pointeurs vers la mémoire partagée
     SharedMemory<FSMStates> *control_memory;
     SharedMemory<FSMStates> *fsm_memory;
+    SharedMemory<std::vector<double>> *current_state_memory;
+    SharedMemory<std::vector<double>> *guidance_waypoint_output_memory;
 
     // Fichier JSON contenant les points de vol
     std::string filename;
 
     // Variables pour la gestion des points et du temps
-    double timer;  // Chronomètre (précision 0.01s)
-    size_t i;      // Index du temps attendu dans `times`
-    std::vector<std::vector<double>> points; // Liste des points 3D
-    std::vector<double> times; // Liste des temps associés
+    double timer;  
+    size_t point;  
+    std::vector<std::vector<double>> trajectory; // Correction ici
+    std::vector<double> times;
 
     // Méthodes
-    bool lecturePoints();      // Chargement des points depuis JSON en INIT
-    void initialiserTimer();   // Réinitialisation du timer en IDLE
-    void verifierTemps();      // Vérification du timer en AUTOMATIC_FLIGHT
+    bool lecturePoints();
+    void initialiserTimer();
+    void verifierTemps();
+    void updateGuidanceWaypoint();
 };
 
 #endif // FCF_MODULE_THREAD_H

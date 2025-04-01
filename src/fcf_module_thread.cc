@@ -12,14 +12,25 @@ using namespace std;
 using json = nlohmann::json;
 using cactus_rt::CyclicThread;
 
-FCFThread::FCFThread(SharedMemory<FSMStates> *control_memory, SharedMemory<FSMStates> *fsm_memory, const string& filename)
-    : CyclicThread("FCFThread", MakeConfig()), control_memory(control_memory), fsm_memory(fsm_memory), filename(filename), timer(0) {
-    points.clear();
+FCFThread::FCFThread(SharedMemory<FSMStates> *control_memory, 
+                     SharedMemory<FSMStates> *fsm_memory, 
+                     SharedMemory<std::vector<double>> *current_state_memory, 
+                     SharedMemory<std::vector<double>> *guidance_waypoint_output_memory, 
+                     const string& filename)
+    : CyclicThread("FCFThread", MakeConfig()), 
+      control_memory(control_memory), 
+      fsm_memory(fsm_memory), 
+      current_state_memory(current_state_memory), 
+      guidance_waypoint_output_memory(guidance_waypoint_output_memory), 
+      filename(filename), 
+      timer(0), 
+      point(0) { // Initialisation de point ici
+    trajectory.clear();
 }
 
-// Gestion de la boucle d'exécution
+/ Gestion de la boucle d'exécution
 CyclicThread::LoopControl FCFThread::Loop(int64_t elapsed_ns) noexcept {
-    FSMStates current_state = fsm_memory->Read(); // Lire l'état actuel de la mémoire partagée
+    FSMStates current_state = fsm_memory->Read();
     
     switch (current_state) {
         case FSMStates::INIT:
@@ -31,6 +42,9 @@ CyclicThread::LoopControl FCFThread::Loop(int64_t elapsed_ns) noexcept {
         case FSMStates::AUTOMATIC_FLIGHT:
             verifierTemps();
             break;
+        case FSMStates::FORCED_LANDING:
+            updateGuidanceWaypoint();
+            break;
         default:
             break;
     }
@@ -41,12 +55,12 @@ CyclicThread::LoopControl FCFThread::Loop(int64_t elapsed_ns) noexcept {
 // Configuration du thread
 cactus_rt::CyclicThreadConfig FCFThread::MakeConfig() {
     cactus_rt::CyclicThreadConfig config;
-    config.period_ns = 10'000'000; // 100 Hz
+    config.period_ns = 10'000'000;
     config.SetFifoScheduler(90);
     return config;
 }
 
-// Lecture du fichier JSON pour extraire les points et le temps
+// Lecture du fichier JSON
 bool FCFThread::lecturePoints() {
     ifstream fichier(filename);
     if (!fichier) {
@@ -58,54 +72,47 @@ bool FCFThread::lecturePoints() {
     fichier >> data;
     
     try {
-        points = data.at("points").get<vector<vector<double>>>(); // Liste de points 3D
-        times = data.at("times").get<vector<double>>(); // Liste des temps
+        trajectory = data.at("trajectory").get<vector<vector<double>>>();
+        times = data.at("times").get<vector<double>>();
     } catch (const json::exception& e) {
         cerr << "Erreur lors de la lecture des données JSON : " << e.what() << endl;
         return false;
     }
     
-    cout << "[INIT] Points et temps chargés depuis le JSON." << endl;
+    cout << "[INIT] Trajectoire et temps chargés." << endl;
     return true;
 }
 
-// Initialisation du timer dans l'état IDLE
+// Initialisation du timer
 void FCFThread::initialiserTimer() {
     timer = 0;
+    point = 0; // Réinitialisation du point
     cout << "[IDLE] Timer initialisé à 0." << endl;
 }
 
-// Vérification du timer dans AUTOMATIC_FLIGHT
+// Vérification du timer
 void FCFThread::verifierTemps() {
-    if (i < times.size()) { // Vérifie qu'on ne dépasse pas la taille du vecteur
-        double expected_time = times[i];
+    if (point < times.size()) {
+        double expected_time = times[point];
 
-        if (timer < expected_time) {
-            // On ne fait rien, on attend que le timer atteigne le temps attendu
-            return;
-        }
-
-        if (timer == expected_time) {
-            cout << "[AUTOMATIC_FLIGHT] Vérification du point " << i << "..." << endl;
-
-            bool point_correct = true; // Pour le moment, on suppose qu'il est correct
-
-            if (point_correct) {
-                cout << "[AUTOMATIC_FLIGHT] Point " << i << " validé." << endl;
-                i++; // Passer au point suivant
-            } else {
-                cout << "[AUTOMATIC_FLIGHT] Point " << i << " incorrect. Mise à jour des points..." << endl;
-
-                // Remplacer tous les points ayant la même coordonnée Z par z = 0
-                double incorrect_z = points[i][2]; // Récupère la valeur Z du point incorrect
-                for (auto &point : points) {
-                    if (point[2] == incorrect_z) {
-                        point[2] = 0;
-                    }
-                }
-            }
+        if (timer >= expected_time) {
+            point++;
         }
     }
-    timer += 0.01; // Incrémente le timer de 0.01 sec (car le thread tourne à 100 Hz)
+    timer += 0.01;
 }
 
+void FCFThread::updateGuidanceWaypoint() {
+    std::vector<double> current_state = current_state_memory->Read();
+
+    if (current_state.size() < 9) {
+        cerr << "Erreur : current_state_memory contient un vecteur de taille incorrecte." << endl;
+        return;
+    }
+
+    std::vector<double> modified_state = current_state;
+    modified_state[2] = 0.0; 
+
+    guidance_waypoint_output_memory->Write(modified_state);
+    cout << "[UPDATE] Guidance waypoint mis à jour avec z = 0." << endl;
+}
