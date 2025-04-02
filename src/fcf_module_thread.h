@@ -36,7 +36,11 @@ private:
     // Variables pour la gestion des points et du temps
     double timer;  
     size_t point;  
-    std::vector<std::vector<double>> trajectory; // Correction ici
+    std::vector<std::vector<double>> position; 
+    std::vector<std::vector<double>> speed;
+    std::vector<double> thrust;
+    std::vector<double> inclinaison;
+    std::vector<double> guidance_mode;
     std::vector<double> times;
 
     // Méthodes

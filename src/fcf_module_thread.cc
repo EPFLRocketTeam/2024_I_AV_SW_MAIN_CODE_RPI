@@ -25,10 +25,15 @@ FCFThread::FCFThread(SharedMemory<FSMStates> *control_memory,
       filename(filename), 
       timer(0), 
       point(0) { // Initialisation de point ici
-    trajectory.clear();
+    position.clear();
+    speed.clear();
+    thrust.clear();
+    inclinaison.clear();
+    guidance_mode.clear();
+
 }
 
-/ Gestion de la boucle d'exécution
+// Gestion de la boucle d'exécution
 CyclicThread::LoopControl FCFThread::Loop(int64_t elapsed_ns) noexcept {
     FSMStates current_state = fsm_memory->Read();
     
@@ -72,7 +77,11 @@ bool FCFThread::lecturePoints() {
     fichier >> data;
     
     try {
-        trajectory = data.at("trajectory").get<vector<vector<double>>>();
+        position = data.at("postition").get<vector<vector<double>>>();
+        speed = data.at("speed").get<vector<vector<double>>>();
+        thrust = data.at("thrust").get<vector<double>>();
+        inclinaison = data.at("inclinaison").get<vector<double>>();
+        guidance_mode = data.at("guidance_mode").get<vector<double>>();
         times = data.at("times").get<vector<double>>();
     } catch (const json::exception& e) {
         cerr << "Erreur lors de la lecture des données JSON : " << e.what() << endl;
