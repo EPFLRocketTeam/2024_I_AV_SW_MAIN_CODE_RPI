@@ -11,3 +11,6 @@
 [submodule "guidance"]
 	path = guidance
 	url = https://github.com/EPFLRocketTeam/2024_I_GNC_G_MPC_PROTO.git
+[submodule "guidance_mpcl1"]
+	path = guidance_mpcl1
+	url = https://github.com/EPFLRocketTeam/2025_I_GNC_G_MPCL1
