@@ -25,9 +25,15 @@ if(CROSS_COMPILE_CM4)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-    # set(CACTUS_RT_ENABLE_FETCH_DEPENDENsCIES OFF)
+    # Path to the copied CasADi install from the Pi
+    set(casadi_DIR "${CMAKE_SOURCE_DIR}/casadi_arm64/casadi/install/lib/cmake/casadi")
+    set(casadi_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/casadi_arm64/casadi/install/include")
 
-    message(STATUS "Cross-compilation for Raspberry Pi Compute Module 4(ARMv8 64-bit) enabled")
+    # Add CasADi ARM64 library path to linker search
+    set(CASADI_LIB_PATH "${CMAKE_SOURCE_DIR}/casadi_arm64/casadi/install/lib")
+    link_directories(${CASADI_LIB_PATH})
+
+    message(STATUS "Cross-compilation for Raspberry Pi Compute Module 4 (ARMv8 64-bit) enabled")
 else()
     message(STATUS "Compiling for the current machine")
 endif()
