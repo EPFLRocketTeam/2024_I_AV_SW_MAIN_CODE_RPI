@@ -59,8 +59,6 @@ bool ComThread::SendControlOutput(const ControlOutputPacket &output_packet)
 {
     Payload payload;
     bool success;
-    ControlOutputPacket control_output_packet = {};
-
     success = payload.WriteControlOutputPacket(output_packet);
     if (!success)
     {
