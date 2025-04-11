@@ -53,7 +53,8 @@ int main()
     // Control Thread
     auto control_thread = app.CreateThread<ControlThread>(&god.fsm_state_memory,
                                                           &god.control_input,
-                                                          &god.control_output);
+                                                          &god.control_output,
+                                                          &god.control_state);
 
     // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
     //                                                         &god.current_state_memory,

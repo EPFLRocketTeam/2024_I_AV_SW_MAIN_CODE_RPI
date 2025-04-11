@@ -13,7 +13,7 @@ ControlThread::ControlThread(SharedMemory<FSMStates> *fsm_state_memory,
     : CyclicThreadStateDependant(fsm_state_memory, "ControlThread", MakeConfig()),
       control_input(control_input),
       control_output(control_output),
-      control_state_memory(control_state)
+      control_state(control_state)
 {
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
     controller->reset();
