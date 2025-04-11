@@ -26,14 +26,10 @@ int main()
     // Create a cactus_rt app configuration
     cactus_rt::AppConfig app_config;
     app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
-    app_config.logger_config.backend_thread_cpu_affinity = 1;
-    // app_config.logger_config.default_handlers.emplace_back(quill::file_handler("/home/ert/2024_I_AV_SW_MAIN_CODE_RPI/log.txt"));
+    // app_config.logger_config.backend_thread_cpu_affinity = 1;
+    app_config.logger_config.default_handlers.emplace_back(quill::file_handler("log.txt"));
 
     App app("RocketApp", app_config);
-
-    // Main thread logger
-    auto main_logger = quill::create_logger("MainThread");
-    LOG_INFO(main_logger, "Main thread started");
 
     // Sets up the signal handlers for SIGINT and SIGTERM
     cactus_rt::SetUpTerminationSignalHandler();
@@ -42,21 +38,22 @@ int main()
     GOD god;
 
     // UART Communication Thread
-    // std::shared_ptr<ComThread> com_thread;
-    // try
-    // {
-    //     com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
-    // }
-    // catch (std::exception &e)
-    // {
-    //     LOG_ERROR(main_logger, "Failed to create ComThread: {}", e.what());
-    //     LOG_CRITICAL(main_logger, "Startup failure");
-    //     std::exit(1);
-    // }
+    std::shared_ptr<ComThread> com_thread;
+    try
+    {
+        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Failed to create ComThread: " << e.what() << std::endl;
+        std::cerr << "Startup failure" << std::endl;
+        return 1;
+    }
 
     // Control Thread
-    // auto control_thread = app.CreateThread<ControlThread>(  &god.fsm_state_memory,
-    //                                                         &god.control_memory, true);
+    auto control_thread = app.CreateThread<ControlThread>(&god.fsm_state_memory,
+                                                          &god.control_input,
+                                                          &god.control_output);
 
     // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
     //                                                         &god.current_state_memory,
@@ -77,16 +74,16 @@ int main()
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
     app.Start(); // NOTE: run in sudo !
-    LOG_INFO(main_logger, "Started threads");
+    std::cout << "Started threads" << std::endl;
 
     // This function blocks until SIGINT or SIGTERM are received.
     cactus_rt::WaitForAndHandleTerminationSignal();
 
     // Stop the application
-    LOG_INFO(main_logger, "Stopping threads");
+    std::cout << "Stopping threads" << std::endl;
     app.RequestStop();
     app.Join();
 
-    LOG_INFO(main_logger, "Main thread stopped");
+    std::cout << "Main thread stopped" << std::endl;
     return 0;
 }
