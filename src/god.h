@@ -12,8 +12,9 @@
 struct GOD // Global Object Dictionary
 {
     // Control
-    SharedMemory<ControlInputPacket> control_input;
-    SharedMemory<ControlOutputPacket> control_output;
+    SharedMemory<ControlInputPacket> control_input; // The received data from the Teensy
+    SharedMemory<ControlOutputPacket> control_output; // The data to be sent to the Teensy
+    SharedMemory<std::list<double>> control_state; // The current state of the controller
 
     // Guidance
     SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9) [x, y, z, vx, vy, vz, thrust, theta, phi]

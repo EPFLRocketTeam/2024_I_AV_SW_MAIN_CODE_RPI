@@ -4,7 +4,7 @@ using namespace std;
 
 GOD::GOD() { 
     // initialize the memories
-    // control_memory.Write(ControlOutput{0, 0, 0, 0}); //What should the initial values be?
+    // TODO: init control input and output
     fsm_state_memory.Write(FSMStates::IDLE);
     current_state_memory.Write(vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
     waypoint_state_memory.Write(vector<double>{0, 0, 2, 0, 0, 0, 0, 0, 0});

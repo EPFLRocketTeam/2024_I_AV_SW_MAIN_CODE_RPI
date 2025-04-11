@@ -8,10 +8,12 @@ using cactus_rt::CyclicThread;
 
 ControlThread::ControlThread(SharedMemory<FSMStates> *fsm_state_memory,
                              SharedMemory<ControlInputPacket> *control_input,
-                             SharedMemory<ControlOutputPacket> *control_output)
+                             SharedMemory<ControlOutputPacket> *control_output,
+                             SharedMemory<std::list<double>> *control_state)
     : CyclicThreadStateDependant(fsm_state_memory, "ControlThread", MakeConfig()),
       control_input(control_input),
-      control_output(control_output)
+      control_output(control_output),
+      control_state_memory(control_state)
 {
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
     controller->reset();
@@ -23,7 +25,7 @@ CyclicThread::LoopControl ControlThread::run(int64_t elapsed_ns) noexcept
     if (input_packet.armed)
     {
         ControlOutput output = controller->ExhaustiveControl(input_packet.desired_state, input_packet.current_state, input_packet.setpointSelection, input_packet.inline_thrust);
-        
+
         // TODO: To raw and to degrees conversion should be done here
         ControlOutputPacket output_packet = {
             input_packet.timestamp,
@@ -32,13 +34,22 @@ CyclicThread::LoopControl ControlThread::run(int64_t elapsed_ns) noexcept
             output.thrust,
             output.mz
         };
-        
+
         control_output->Write(output_packet);
+        control_state->Write(controller->getState());
     }
     else
     {
         controller->reset();
-        control_output->Write({0.0, 0.0, 0.0, 0.0, 0.0});
+        ControlOutputPacket output_packet = {
+            input_packet.timestamp,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+        };
+
+        control_output->Write(output_packet);
     }
 
     return LoopControl::Continue;

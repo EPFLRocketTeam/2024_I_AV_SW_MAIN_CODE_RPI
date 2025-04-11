@@ -15,7 +15,8 @@ class ControlThread : public CyclicThreadStateDependant
   public:
     ControlThread(SharedMemory<FSMStates> *,
                   SharedMemory<ControlInputPacket> *control_input,
-                  SharedMemory<ControlOutputPacket> *control_output);
+                  SharedMemory<ControlOutputPacket> *control_output,
+                  SharedMemory<std::list<double>> *control_state);
 
   private:
     Controller ControllerFromFile(const std::string &file_path);
@@ -23,8 +24,9 @@ class ControlThread : public CyclicThreadStateDependant
     static cactus_rt::CyclicThreadConfig MakeConfig();
 
     std::unique_ptr<Controller> controller;
-    SharedMemory<ControlInputPacket>* control_input;
-    SharedMemory<ControlOutputPacket>* control_output;
+    SharedMemory<ControlInputPacket> *control_input;
+    SharedMemory<ControlOutputPacket> *control_output;
+    SharedMemory<std::list<double>> *control_state;
 
     LoopControl run(int64_t elapsed_ns) noexcept;
 };
