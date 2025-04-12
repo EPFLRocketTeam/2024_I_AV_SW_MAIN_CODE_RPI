@@ -68,10 +68,13 @@ int main()
     // auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
     // auto log_thread = app.CreateThread<LogThread>(&god);
-    // auto fcf_thread = app.CreatThread<FCFThread>(&god.fsm_state_memory,
-    //                                              &god.guidance_waypoint_output_memory,
-    //                                              &god.current_state_memory, true)
-
+    // auto fcf_thread = app.CreateThread<FCFThread>(
+    //     &god.fsm_state_memory, // Ce champ correspond à SharedMemory<FSMStates>*
+    //     &god.fsm_state_memory,
+    //     &god.current_state_memory,
+    //     &god.guidance_waypoint_output_memory,
+    //     "fcf_config.json" //nom du fichier pour la trajectoire
+    // );
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
     app.Start(); // NOTE: run in sudo !
