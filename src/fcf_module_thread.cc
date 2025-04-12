@@ -77,7 +77,7 @@ bool FCFThread::lecturePoints() {
     fichier >> data;
     
     try {
-        position = data.at("postition").get<vector<vector<double>>>();
+        position = data.at("position").get<vector<vector<double>>>();
         speed = data.at("speed").get<vector<vector<double>>>();
         thrust = data.at("thrust").get<vector<double>>();
         inclinaison = data.at("inclinaison").get<vector<double>>();
