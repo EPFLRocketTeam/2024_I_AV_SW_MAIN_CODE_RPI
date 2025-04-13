@@ -1,0 +1,1 @@
+/etc/alternatives/openblas_config.h-aarch64-linux-gnu

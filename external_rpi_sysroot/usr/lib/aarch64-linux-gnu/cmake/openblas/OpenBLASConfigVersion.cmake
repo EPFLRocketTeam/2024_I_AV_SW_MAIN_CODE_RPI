@@ -1,0 +1,1 @@
+/etc/alternatives/OpenBLASConfigVersion.cmake-aarch64-linux-gnu

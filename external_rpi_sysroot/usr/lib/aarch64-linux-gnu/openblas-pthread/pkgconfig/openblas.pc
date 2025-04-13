@@ -1,0 +1,12 @@
+libdir=/usr/lib/aarch64-linux-gnu/openblas-pthread/
+includedir=/usr/include/aarch64-linux-gnu/openblas-pthread/
+openblas_config= USE_64BITINT= DYNAMIC_ARCH=1 DYNAMIC_OLDER=1 NO_CBLAS= NO_LAPACK= NO_LAPACKE=1 NO_AFFINITY=1 USE_OPENMP=0 generic MAX_THREADS=64
+version=0.3.21
+extralib=-lm -lpthread -lgfortran -lm -lpthread -lgfortran
+Name: openblas
+Description: OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version
+Version: ${version}
+URL: https://github.com/xianyi/OpenBLAS
+Libs: -L${libdir} -lopenblas
+Libs.private: ${extralib}
+Cflags: -I${includedir}

@@ -1,0 +1,18 @@
+; This file ensures that the rocket code runs on boot
+; It needs to be placed in /etc/systemd/system/ on the CM4
+; It needs to be enabled with `sudo systemctl enable rocket.service`
+
+[Unit]
+Description=Main Code RPI
+After=dev-serial0.device
+Requires=dev-serial0.device
+
+[Service]
+ExecStart=/home/pi/rocket
+WorkingDirectory=/home/pi
+StandardOutput=journal
+StandardError=journal
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+prefix=/usr
+libdir=${prefix}/lib/aarch64-linux-gnu/openblas-pthread
+includedir=${prefix}/include/aarch64-linux-gnu
+Name: openblas-blas
+Description: Optimized BLAS (linear algebra) library based on GotoBLAS2
+Version: 0.3.21+ds
+URL: https://github.com/xianyi/OpenBLAS
+Libs: -L${libdir} -lblas
+Libs.private: -L${libdir} -lblas -lgfortran -lpthread -lm
+Cflags: -I${includedir}
