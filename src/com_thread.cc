@@ -4,7 +4,7 @@
 
 // using cactus_rt::CyclicThread;
 
-constexpr int BAUDRATE = B115200;
+constexpr int BAUDRATE = B460800;
 constexpr const char *DEVICE = "/dev/serial0";
 
 using cactus_rt::CyclicThread;
