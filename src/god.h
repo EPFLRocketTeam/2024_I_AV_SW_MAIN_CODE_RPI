@@ -7,14 +7,19 @@
 #include <string>
 #include "fsm_states.h"
 #include "control_thread.h"
-#include "Packets.h"
+
+#include "shared_types/VehicleInputs.h"
+#include "shared_types/VehicleOutputs.h"
 
 struct GOD // Global Object Dictionary
 {
+    // FSM
+    SharedMemory<FSMStates> fsm_state_memory;
+
     // Control
-    SharedMemory<ControlInputPacket> control_input; // The received data from the Teensy
-    SharedMemory<ControlOutputPacket> control_output; // The data to be sent to the Teensy
-    SharedMemory<std::list<double>> control_state; // The current state of the controller
+    SharedMemory<VehicleInputs> vehicle_inputs_memory; // The received data from the Teensy
+    SharedMemory<VehicleOutputs> vehicle_outputs_memory; // The data to be sent to the Teensy
+    SharedMemory<std::list<double>> control_state_memory; // The current state of the controller
 
     // Guidance
     SharedMemory<std::vector<double>> current_state_memory; // current state of the drone (9) [x, y, z, vx, vy, vz, thrust, theta, phi]
@@ -23,12 +28,13 @@ struct GOD // Global Object Dictionary
 
     SharedMemory<std::vector<double>> guidance_waypoint_output_memory; // output of the guidance system (9)
 
-    // FSM
-    SharedMemory<FSMStates> fsm_state_memory;
-
     // Constructor
     GOD();
     ~GOD() = default;
+
+    // Serialize and deserialize methods for UART communication with Teensy
+    void serialize_for_Teensy(Payload &payload) const;
+    void deserialize_from_Teensy(Payload &payload);
 
     // Log data
     std::string log_data() const;

@@ -41,7 +41,7 @@ int main()
     std::shared_ptr<ComThread> com_thread;
     try
     {
-        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
+        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.vehicle_outputs_memory);
     }
     catch (std::exception &e)
     {
@@ -53,8 +53,8 @@ int main()
     // Control Thread
     auto control_thread = app.CreateThread<ControlThread>(&god.fsm_state_memory,
                                                           &god.control_input,
-                                                          &god.control_output,
-                                                          &god.control_state);
+                                                          &god.vehicle_outputs_memory,
+                                                          &god.control_state_memory);
 
     // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
     //                                                         &god.current_state_memory,
@@ -92,4 +92,8 @@ int main()
 
     std::cout << "Main thread stopped" << std::endl;
     return 0;
+
+    TODO:
+        - UART rework for one-hsot and god sync
+        - tracing doc in README
 }

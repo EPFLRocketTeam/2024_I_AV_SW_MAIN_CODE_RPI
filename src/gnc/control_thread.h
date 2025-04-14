@@ -15,8 +15,8 @@ class ControlThread : public CyclicThreadStateDependant
   public:
     ControlThread(SharedMemory<FSMStates> *,
                   SharedMemory<ControlInputPacket> *control_input,
-                  SharedMemory<ControlOutputPacket> *control_output,
-                  SharedMemory<std::list<double>> *control_state);
+                  SharedMemory<ControlOutputPacket> *vehicle_outputs_memory,
+                  SharedMemory<std::list<double>> *control_state_memory);
 
   private:
     Controller ControllerFromFile(const std::string &file_path);
@@ -25,8 +25,8 @@ class ControlThread : public CyclicThreadStateDependant
 
     std::unique_ptr<Controller> controller;
     SharedMemory<ControlInputPacket> *control_input;
-    SharedMemory<ControlOutputPacket> *control_output;
-    SharedMemory<std::list<double>> *control_state;
+    SharedMemory<ControlOutputPacket> *vehicle_outputs_memory;
+    SharedMemory<std::list<double>> *control_state_memory;
 
     LoopControl run(int64_t elapsed_ns) noexcept;
 };

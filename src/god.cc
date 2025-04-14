@@ -1,13 +1,41 @@
 #include "god.h"
+#include "Payload.h"
 
 using namespace std;
 
 GOD::GOD() { 
     // initialize the memories
-    // TODO: init control input and output
+    // TODO: init vehicle input and output
     fsm_state_memory.Write(FSMStates::IDLE);
     current_state_memory.Write(vector<double>{0, 0, 0, 0, 0, 0, 0, 0, 0});
     waypoint_state_memory.Write(vector<double>{0, 0, 2, 0, 0, 0, 0, 0, 0});
+}
+
+void GOD::serialize_for_Teensy(Payload &payload) const
+{
+    VehicleOutputs vehicle_output = vehicle_outputs_memory.Read();
+    vehicle_output.serialize(payload);
+    if (payload.hasOverflow())
+    {
+        throw std::runtime_error("Payload overflow when writing for Teensy");
+    }
+}
+
+void GOD::deserialize_from_Teensy(Payload &payload)
+{
+    FSMStates fsm_state;
+    deserializeFSMState(fsm_state, payload);
+    
+    VehicleInputs vehicle_input;
+    vehicle_input.deserialize(payload);
+
+    if (payload.hasReadError())
+    {
+        throw std::runtime_error("Payload read error when reading from Teensy");
+    }
+
+    fsm_state_memory.Write(fsm_state);
+    vehicle_inputs_memory.Write(vehicle_input);
 }
 
 string GOD::log_data() const

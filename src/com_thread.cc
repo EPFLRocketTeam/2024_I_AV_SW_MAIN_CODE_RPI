@@ -2,25 +2,27 @@
 #include <fcntl.h>   // File control
 #include <termios.h> // Terminal I/O
 
-// using cactus_rt::CyclicThread;
-
+// Rule of thumb to compute the baudrate: baudrate =  payload size in bytes * 10 * frequency in Hz
+// For example, for a payload size of 256 bytes and a frequency of 100 Hz, the minimum baudrate is 256'000
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
 
 using cactus_rt::CyclicThread;
 
-ComThread::ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output)
-    : CyclicThread("ComThread", MakeConfig()), control_input(control_input), control_output(control_output)
+ComThread::ComThread(GOD *god) : CyclicThread("ComThread", MakeConfig()), god(god)
 {
     uart_manager = new CM4UART(BAUDRATE, DEVICE, Logger());
-    uart_manager->RegisterHandler((int)PacketId::ControlInput, [this](Payload &payload)
-                                  { ReceiveControlInput(payload); });
 
     bool success = uart_manager->Begin();
     if (!success)
     {
         throw std::runtime_error("Failed to initialize UART");
     }
+}
+
+ComThread::~ComThread()
+{
+    delete uart_manager;
 }
 
 cactus_rt::CyclicThreadConfig ComThread::MakeConfig()
@@ -33,63 +35,61 @@ cactus_rt::CyclicThreadConfig ComThread::MakeConfig()
     // Pin this thread on CPU core #3
     // config.cpu_affinity = std::vector<size_t>{3};
 
-    // Run the thread with SCHED_FIFO at real-time priority of 90.
-    config.SetFifoScheduler(90);
+    config.SetFifoScheduler(static_cast<int>(RT_PRIORITY::MEDIUM));
     return config;
 }
 
-ComThread::~ComThread()
+void ComThread::SendDataToTeensy()
 {
-    delete uart_manager;
+    Payload payload;
+    try
+    {
+        god->serialize_for_Teensy(payload);
+    }
+    catch (const std::runtime_error &e)
+    {
+        LOG_ERROR(Logger(), "Failed to serialize payload for Teensy: {}", e.what());
+        return;
+    }
+
+    bool send_success = uart_manager->SendPacket(payload);
+    if (!send_success)
+    {
+        LOG_ERROR(Logger(), "Failed to send packet to Teensy");
+        return;
+    }
+}
+
+void ComThread::ReceiveDataFromTeensy()
+{
+    Payload received_payload;
+    bool received_success = uart_manager->ReceivePacket(received_payload);
+    if (!received_success)
+    {
+        LOG_ERROR(Logger(), "Failed to receive packet");
+        return;
+    }
+    if (received_payload.size() == 0)
+    {
+        LOG_WARNING(Logger(), "Received empty packet");
+        return;
+    }
+
+    try
+    {
+        god->deserialize_from_Teensy(received_payload);
+    }
+    catch (const std::runtime_error &e)
+    {
+        LOG_ERROR(Logger(), "Failed to deserialize payload from Teensy: {}", e.what());
+        return;
+    }
 }
 
 CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
-    uart_manager->ReceiveUARTPackets();
-
-    ControlOutputPacket output_packet = control_output->Read();
-    SendControlOutput(output_packet);
-    
-    uart_manager->SendUARTPackets();
+    SendDataToTeensy();
+    ReceiveDataFromTeensy();
 
     return LoopControl::Continue;
-}
-
-bool ComThread::SendControlOutput(const ControlOutputPacket &output_packet)
-{
-    Payload payload;
-    bool success;
-    success = payload.WriteControlOutputPacket(output_packet);
-    if (!success)
-    {
-        LOG_ERROR(Logger(), "Failed to write control output to payload");
-        return false;
-    }
-
-    success = uart_manager->SendUARTPacket((int)PacketId::ControlOutput, payload);
-
-    if (!success)
-    {
-        LOG_ERROR(Logger(), "Failed to send control output");
-        return false;
-    }
-
-    LOG_INFO(Logger(), "Sent control output");
-
-    return true;
-}
-
-void ComThread::ReceiveControlInput(Payload &payload)
-{
-    ControlInputPacket input_packet;
-    bool success = payload.ReadControlInputPacket(input_packet);
-    if (!success)
-    {
-        LOG_ERROR(Logger(), "Failed to read control input from payload");
-        return;
-    }
-
-    LOG_INFO(Logger(), "Received control input");
-
-    control_input->Write(input_packet);
 }

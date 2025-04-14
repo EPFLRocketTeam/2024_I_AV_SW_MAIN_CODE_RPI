@@ -1,5 +1,6 @@
 #include "control_thread.h"
 #include "shared_memory.h"
+#include "priorities.h"
 #include <cactus_rt/rt.h>
 #include <iostream>
 
@@ -8,12 +9,12 @@ using cactus_rt::CyclicThread;
 
 ControlThread::ControlThread(SharedMemory<FSMStates> *fsm_state_memory,
                              SharedMemory<ControlInputPacket> *control_input,
-                             SharedMemory<ControlOutputPacket> *control_output,
-                             SharedMemory<std::list<double>> *control_state)
+                             SharedMemory<ControlOutputPacket> *vehicle_outputs_memory,
+                             SharedMemory<std::list<double>> *control_state_memory)
     : CyclicThreadStateDependant(fsm_state_memory, "ControlThread", MakeConfig()),
       control_input(control_input),
-      control_output(control_output),
-      control_state(control_state)
+      vehicle_outputs_memory(vehicle_outputs_memory),
+      control_state_memory(control_state_memory)
 {
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
     controller->reset();
@@ -35,8 +36,8 @@ CyclicThread::LoopControl ControlThread::run(int64_t elapsed_ns) noexcept
             output.mz
         };
 
-        control_output->Write(output_packet);
-        control_state->Write(controller->getState());
+        vehicle_outputs_memory->Write(output_packet);
+        control_state_memory->Write(controller->getState());
     }
     else
     {
@@ -49,7 +50,7 @@ CyclicThread::LoopControl ControlThread::run(int64_t elapsed_ns) noexcept
             0.0
         };
 
-        control_output->Write(output_packet);
+        vehicle_outputs_memory->Write(output_packet);
     }
 
     return LoopControl::Continue;
@@ -66,7 +67,7 @@ cactus_rt::CyclicThreadConfig ControlThread::MakeConfig()
     config.cpu_affinity = std::vector<size_t>{3};
 
     // Run the thread with SCHED_FIFO at real-time priority of 90.
-    config.SetFifoScheduler(90);
+    config.SetFifoScheduler(static_cast<int>(RT_PRIORITY::MEDIUM_HIGH));
     return config;
 }
 

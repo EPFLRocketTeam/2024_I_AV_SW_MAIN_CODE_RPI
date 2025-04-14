@@ -2,16 +2,16 @@
 #define COM_THREAD_H
 
 #include "CM4UART.h"
-#include "Packets.h"
 #include "shared_memory.h"
 #include <cactus_rt/rt.h>
+#include "god.h"
 
 using cactus_rt::CyclicThread;
 
 class ComThread : public CyclicThread
 {
   public:
-    ComThread(SharedMemory<ControlInputPacket> *control_input, SharedMemory<ControlOutputPacket> *control_output);
+    ComThread(GOD *god);
     ~ComThread();
 
   protected:
@@ -20,11 +20,10 @@ class ComThread : public CyclicThread
   private:
     static cactus_rt::CyclicThreadConfig MakeConfig();
 
-    bool SendControlOutput(const ControlOutputPacket &output);
-    void ReceiveControlInput(Payload &payload);
+    void SendDataToTeensy();
+    void ReceiveDataFromTeensy();
 
-    SharedMemory<ControlInputPacket> *control_input;
-    SharedMemory<ControlOutputPacket> *control_output;
+    GOD *god;
 
     CM4UART *uart_manager;
 };

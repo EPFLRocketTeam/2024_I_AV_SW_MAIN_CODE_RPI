@@ -186,6 +186,9 @@ Finally, to only show certain threads, one can pipe the output of `ps` into `gre
 
     ps -eLo start,pid,user,policy,rtprio,psr,command | grep 'rocket'
 
+### Tracing
+TODO
+
 ## CPU Isolation
 To paraphrase [the wiki](https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cpu-partitioning/start), the `isolcpus` kernel parameter can be used to specify CPUs to be isolated from the scheduler algorithms. The argument is a CPU core list:
 

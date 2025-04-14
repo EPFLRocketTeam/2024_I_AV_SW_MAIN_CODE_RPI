@@ -4,6 +4,7 @@
 #include "guidance_thread.h"
 #include <iostream>
 #include "model.h"
+#include "priorities.h"
 
 using cactus_rt::CyclicThread;
 
@@ -56,6 +57,6 @@ cactus_rt::CyclicThreadConfig GuidanceThread::MakeConfig()
     config.cpu_affinity = std::vector<size_t>{3};
 
     // Run the thread with SCHED_FIFO at real-time priority of 80.
-    config.SetFifoScheduler(70);
+    config.SetFifoScheduler(static_cast<int>(RT_PRIORITY::MEDIUM));
     return config;
 }
