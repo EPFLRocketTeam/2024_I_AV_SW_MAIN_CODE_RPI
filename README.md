@@ -89,7 +89,8 @@ From the root of the project, run the following commands:
 ```bash
 mkdir build_cm4
 cd build_cm4
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-rpi64.cmake ..make
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-rpi64.cmake ..
+make
 ```
 This will compile the project for the Raspberry Pi 4. The resulting executable can be found in the build directory.
 
