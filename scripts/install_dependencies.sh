@@ -100,6 +100,9 @@ make -j4
 # Install CasADi
 make install
 
+# Update the linker’s cache
+sudo ldconfig
+
 
 echo
 echo "🚀 Dependencies installation complete!"
