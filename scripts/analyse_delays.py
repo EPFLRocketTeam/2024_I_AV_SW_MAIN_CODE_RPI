@@ -63,7 +63,8 @@ def plot_round_trip_time(all_data):
         print("No data to plot!")
         return
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    plt.figure(figsize=(15, 10))
+    fig, axes = plt.subplots(2, 3, num=1)  # num=1 forces it to Figure 
     fig.suptitle('UART Round Trip Time Analysis', fontsize=16)
     
     row_idx = 0
@@ -116,7 +117,7 @@ def plot_round_trip_time(all_data):
     print("\nCombined Statistics:")
     print(f"  Min: {min_rtt:.2f}, Max: {max_rtt:.2f}, Avg: {avg_rtt:.2f}, Std: {std_rtt:.2f}")
     
-    plt.show()
+    # plt.show()
 
 # Function to plot loop duration data
 def plot_loop_duration(all_data):
@@ -124,7 +125,8 @@ def plot_loop_duration(all_data):
         print("No data to plot!")
         return
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+    plt.figure(figsize=(15, 10))
+    fig, axes = plt.subplots(2, 3, num=2)
     fig.suptitle('Loop Duration Analysis', fontsize=16)
     
     # Calculate loop durations for each data point (difference between consecutive time values)
@@ -185,11 +187,11 @@ def plot_loop_duration(all_data):
     print("\nCombined Statistics:")
     print(f"  Min: {min_ld:.6f}, Max: {max_ld:.6f}, Avg: {avg_ld:.6f}, Std: {std_ld:.6f}")
     
-    plt.show()
+    # plt.show()
 
 def main():
     # Define the data folder path - update this to your actual data folder path
-    data_folder = "./flight_data"
+    data_folder = "/media/daniel/63FC-DAA7"
     
     # Get the last two session numbers
     sessions = get_last_two_sessions(data_folder)
@@ -214,6 +216,8 @@ def main():
     
     # Plot loop duration data
     plot_loop_duration(all_data)
+
+    plt.show()
 
 if __name__ == "__main__":
     main()
