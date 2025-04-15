@@ -94,6 +94,6 @@ int main()
     return 0;
 
     TODO:
-        - UART rework for one-hsot and god sync
+        - UART rework for one-shot and god sync
         - tracing doc in README
 }
