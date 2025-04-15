@@ -27,7 +27,7 @@ int main()
     cactus_rt::AppConfig app_config;
     app_config.logger_config.backend_thread_strict_log_timestamp_order = true;
     // app_config.logger_config.backend_thread_cpu_affinity = 1;
-    app_config.logger_config.default_handlers.emplace_back(quill::file_handler("log.txt"));
+    // app_config.logger_config.default_handlers.emplace_back(quill::file_handler("log.txt"));
 
     App app("RocketApp", app_config);
 

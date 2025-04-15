@@ -45,6 +45,8 @@ ComThread::~ComThread()
 
 CyclicThread::LoopControl ComThread::Loop(int64_t elapsed_ns) noexcept
 {
+    auto span = Tracer().WithSpan("Com");
+
     uart_manager->ReceiveUARTPackets();
 
     ControlOutputPacket output_packet = control_output->Read();

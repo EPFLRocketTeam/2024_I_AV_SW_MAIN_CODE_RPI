@@ -15,12 +15,16 @@ ControlThread::ControlThread(SharedMemory<FSMStates> *fsm_state_memory,
       control_output(control_output),
       control_state(control_state)
 {
+    stateDependentFunctions[FSMStates::IDLE] = std::bind(&ControlThread::run, this, std::placeholders::_1);
+
     controller = std::make_unique<Controller>(ControllerFromFile(TUNING_FILE_NAME));
     controller->reset();
 }
 
 CyclicThread::LoopControl ControlThread::run(int64_t elapsed_ns) noexcept
 {
+    auto span = Tracer().WithSpan("Control");
+
     ControlInputPacket input_packet = control_input->Read();
     if (input_packet.armed)
     {
