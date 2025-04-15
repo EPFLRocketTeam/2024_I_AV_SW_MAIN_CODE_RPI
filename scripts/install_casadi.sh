@@ -16,7 +16,7 @@ echo
 # Install required packages
 # TODO: Lock versions of packages to avoid breaking changes
 sudo apt-get update
-sudo apt-get install -y build-essential gfortran liblapack-dev libmetis-dev libopenblas-dev protobuf-compiler libprotobuf-dev git cmake
+sudo apt-get install -y build-essential gfortran liblapack-dev libmetis-dev libopenblas-dev git cmake
 sudo apt-get remove -y coinor-libipopt-dev
 
 
