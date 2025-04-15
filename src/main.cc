@@ -13,7 +13,7 @@
 
 #include "fsm_thread.h"
 #include "control_thread.h"
-#include "guidance_thread.h"
+// #include "guidance_thread.h"
 #include "navigation_thread.h"
 #include "log_thread.h"
 #include "com_thread.h"
