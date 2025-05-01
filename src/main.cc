@@ -1,6 +1,6 @@
-#include "com_thread.h"
-#include "control_thread.h"
-#include "Packets.h"
+// #include "com_thread.h"
+// #include "control_thread.h"
+// #include "Packets.h"
 #include "quill/Quill.h" // For Logger
 #include "shared_memory.h"
 #include <cactus_rt/rt.h>
@@ -8,16 +8,17 @@
 
 #include <cstdint>
 
-#include "god.h"
-#include "fsm_states.h"
+// #include "god.h"
+// #include "fsm_states.h"
 
-#include "fsm_thread.h"
-#include "control_thread.h"
-#include "guidance_thread.h"
-#include "navigation_thread.h"
-#include "log_thread.h"
-#include "com_thread.h"
-#include "fcf_module_thread.h"
+// #include "fsm_thread.h"
+// #include "control_thread.h"
+// #include "guidance_thread.h"
+// #include "navigation_thread.h"
+// #include "log_thread.h"
+// #include "com_thread.h"
+// #include "fcf_module_thread.h"
+#include "com_control_thread.h"
 
 using cactus_rt::App;
 
@@ -35,26 +36,9 @@ int main()
     cactus_rt::SetUpTerminationSignalHandler();
 
     // Global Object Dictionary
-    GOD god;
+    // GOD god;
 
-    // UART Communication Thread
-    std::shared_ptr<ComThread> com_thread;
-    try
-    {
-        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.vehicle_outputs_memory);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Failed to create ComThread: " << e.what() << std::endl;
-        std::cerr << "Startup failure" << std::endl;
-        return 1;
-    }
-
-    // Control Thread
-    auto control_thread = app.CreateThread<ControlThread>(&god.fsm_state_memory,
-                                                          &god.control_input,
-                                                          &god.vehicle_outputs_memory,
-                                                          &god.control_state_memory);
+    auto com_control_thread = app.CreateThread<ComControlThread>();
 
     // auto guidance_thread = app.CreateThread<GuidanceThread>(&god.fsm_state_memory,
     //                                                         &god.current_state_memory,
@@ -92,8 +76,4 @@ int main()
 
     std::cout << "Main thread stopped" << std::endl;
     return 0;
-
-    TODO:
-        - UART rework for one-shot and god sync
-        - tracing doc in README
 }

@@ -5,8 +5,21 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/gnc
 )
 
-file(GLOB HEADERS "*.h" "gnc/*.h")
-file(GLOB SOURCES "*.cc" "gnc/*.cc")
+# file(GLOB HEADERS "*.h" "gnc/*.h")
+set(HEADERS
+    gnc/control_driver.h
+    com_control_thread.h
+    priorities.h
+    shared_memory.h
+)
+
+# file(GLOB SOURCES "*.cc" "gnc/*.cc")
+set(SOURCES
+    main.cc
+    gnc/control_driver.cc
+    com_control_thread.cc
+)
+
 
 add_executable(rocket ${SOURCES} ${HEADERS})
 
