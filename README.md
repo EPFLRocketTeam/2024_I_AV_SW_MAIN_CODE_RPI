@@ -76,7 +76,7 @@ The following packages are required to cross compile the project: `build-essenti
 You can install them on your machine by running these commands:
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+sudo apt install -y build-essential cmake gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu
 ```
 
 Additionally, you need to copy over libraries from the Raspberry Pi to your computer. These should already be tracked in git. However, if you change a library version or install a new one, you will need to copy them again. To do this, run the `update_sysroot.sh` from the root of the project:

@@ -5,8 +5,9 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 
 # Set the cross compiler
-set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
-set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
+set(CMAKE_C_COMPILER /usr/bin/aarch64-linux-gnu-gcc-11)
+set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++-11)
+
 
 # Set sysroot (important: point to the sysroot you copied)
 set(SYSROOT_PATH ${CMAKE_SOURCE_DIR}/external_rpi_sysroot)
