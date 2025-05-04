@@ -7,19 +7,19 @@
 #include "control_driver.h"
 // #include "god.h"
 
-using cactus_rt::CyclicThread;
+using cactus_rt::Thread;
 
-class ComControlThread : public CyclicThread
+class ComControlThread : public Thread
 {
   public:
     ComControlThread();
     ~ComControlThread();
 
   protected:
-    LoopControl Loop(int64_t elapsed_ns) noexcept final;
+    void Run() noexcept final;
 
   private:
-    static cactus_rt::CyclicThreadConfig MakeConfig();
+    static cactus_rt::ThreadConfig MakeConfig();
 
     // GOD *god;
     CM4UARTDriver *uart_driver;

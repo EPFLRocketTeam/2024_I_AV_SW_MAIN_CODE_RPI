@@ -8,9 +8,9 @@
 constexpr int BAUDRATE = B115200;
 constexpr const char *DEVICE = "/dev/serial0";
 
-using cactus_rt::CyclicThread;
+using cactus_rt::Thread;
 
-ComControlThread::ComControlThread() : CyclicThread("ComControlThread", MakeConfig())
+ComControlThread::ComControlThread() : Thread("ComControlThread", MakeConfig())
 {
     uart_driver = new CM4UARTDriver(DEVICE, BAUDRATE);
     if (!uart_driver->Begin())
@@ -18,7 +18,8 @@ ComControlThread::ComControlThread() : CyclicThread("ComControlThread", MakeConf
         throw std::runtime_error("Failed to initialize UART");
     }
 
-    try {
+    try
+    {
         control_driver = new ControlDriver();
     }
     catch (const std::runtime_error &e)
@@ -33,12 +34,12 @@ ComControlThread::~ComControlThread()
     delete control_driver;
 }
 
-cactus_rt::CyclicThreadConfig ComControlThread::MakeConfig()
+cactus_rt::ThreadConfig ComControlThread::MakeConfig()
 {
-    cactus_rt::CyclicThreadConfig config;
+    cactus_rt::ThreadConfig config;
 
     // Run at 100 Hz.
-    config.period_ns = 10'000'000;
+    // config.period_ns = 10'000'000;
 
     // Pin this thread on CPU core #3
     // config.cpu_affinity = std::vector<size_t>{3};
@@ -47,43 +48,48 @@ cactus_rt::CyclicThreadConfig ComControlThread::MakeConfig()
     return config;
 }
 
-CyclicThread::LoopControl ComControlThread::Loop(int64_t elapsed_ns) noexcept
+void ComControlThread::Run() noexcept
 {
-    // Wait for and read a packet from UART
-    Payload input_payload;
-    if (!uart_driver->WaitForAndReadPacket(input_payload))
+    while (!this->StopRequested())
     {
-        std::cerr << "Failed to wait for packet" << std::endl;
-        return LoopControl::Continue;
+        try
+        {
+            // Wait for data to arrive on the UART device
+            std::cout << "Waiting for data..." << std::endl;
+            if (!uart_driver->WaitForData(1000)) // 1s timeout
+            {
+                continue; // Timeout
+            }
+
+            // Read the packet from the UART device
+            Payload input_payload = uart_driver->ReadPacket();
+
+            // Decode the input packet
+            VehicleInputs v_input;
+            v_input.deserialize(input_payload);
+            if (input_payload.hasReadError())
+            {
+                throw std::runtime_error("Failed to read input payload");
+            }
+
+            // Run the control algorithm
+            VehicleOutputs v_output = control_driver->RunControl(v_input);
+
+            // Encode the output packet
+            Payload output_payload;
+            v_output.serialize(output_payload);
+            if (output_payload.hasOverflow())
+            {
+                throw std::runtime_error("Output payload overflow");
+            }
+
+            // Send the output packet over UART
+            uart_driver->WritePacketOrTimeout(1, output_payload);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Com Control Thread Error: " << e.what() << std::endl;
+            continue; // Continue to the next iteration
+        }
     }
-
-    // Decode the input packet
-    VehicleInputs v_input;
-    v_input.deserialize(input_payload);
-    if (input_payload.hasReadError())
-    {
-        std::cerr << "Failed to deserialize input_payload" << std::endl;
-        return LoopControl::Continue;
-    }
-
-    // Run the control algorithm
-    VehicleOutputs v_output = control_driver->RunControl(v_input);
-
-    // Encode the output packet
-    Payload output_payload;
-    v_output.serialize(output_payload);
-    if (output_payload.hasOverflow())
-    {
-        std::cerr << "Failed to serialize output_payload, size exceeds limit." << std::endl;
-        return LoopControl::Continue;
-    }
-
-    // Send the output packet over UART
-    if (!uart_driver->WritePacketOrTimeout(1, output_payload))
-    {
-        std::cerr << "Failed to send packet" << std::endl;
-        return LoopControl::Continue;
-    }
-
-    return LoopControl::Continue;
 }

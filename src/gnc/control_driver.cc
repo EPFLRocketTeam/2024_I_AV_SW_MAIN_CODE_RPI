@@ -97,7 +97,7 @@ Controller ControlDriver::ControllerFromJSON(const json &doc)
     }
     const PID rateControl = {P, I, D, Controller::RATE_DT, {TORQUE_LIMIT_XY, TORQUE_LIMIT_XY, TORQUE_LIMIT_Z}, {-0.0, 0.0, 0.}};
 
-    std::cout << "Successfully loaded controller from file: {}" << std::endl;
+    std::cout << "Successfully loaded controller from file!" << std::endl;
 
     return {rateControl, attControl, velControl, posControl,
             M, R, GIMBAL_LIMIT, GIMBAL_RATE_LIMIT,
