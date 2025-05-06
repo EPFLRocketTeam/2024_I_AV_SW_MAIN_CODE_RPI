@@ -1,0 +1,14 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.configureSettings": {
+      "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/toolchain-rpi64.cmake"
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build_cm4",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.includePath": [
+      "${workspaceFolder}/**",
+      "${workspaceFolder}/external_rpi_sysroot/usr/include/**",
+      "${workspaceFolder}/external_rpi_sysroot/usr/local/include/**"
+    ]
+  }
+  

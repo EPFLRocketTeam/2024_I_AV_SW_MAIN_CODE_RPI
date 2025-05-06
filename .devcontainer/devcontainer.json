@@ -1,0 +1,23 @@
+{
+    "name": "Raspberry Pi CM4 Cross-Compilation",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "rpi-cross-compile",
+    "workspaceFolder": "/workspace",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "ms-vscode.cpptools-extension-pack"
+        ],
+        "settings": {
+          "terminal.integrated.defaultProfile.linux": "bash",
+          "cmake.configureOnOpen": true,
+          "cmake.configureSettings": {
+            "CMAKE_TOOLCHAIN_FILE": "${workspaceFolder}/toolchain-rpi64.cmake"
+          },
+          "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+          "cmake.buildDirectory": "${workspaceFolder}/build_cm4"
+        }
+      }
+    }
+  }
+  

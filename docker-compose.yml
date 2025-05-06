@@ -1,0 +1,9 @@
+services:
+  rpi-cross-compile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    tty: true
