@@ -6,17 +6,20 @@
 #include "fsm_states.h"
 #include <vector>
 #include <string>
+#include <list>
+#include <chrono>
+
 
 using cactus_rt::CyclicThread;
 
 class FCFThread : public CyclicThread
 {
 public:
-    FCFThread(SharedMemory<FSMStates> *control_memory, 
-              SharedMemory<FSMStates> *fsm_memory, 
-              SharedMemory<std::vector<double>> *current_state_memory, 
-              SharedMemory<std::vector<double>> *guidance_waypoint_output_memory, 
-              const std::string &filename);
+    FCFThread(SharedMemory<std::list<double>>* control_state,
+              SharedMemory<FSMStates>* fsm_state_memory,
+              SharedMemory<std::vector<double>>* current_state_memory,
+              SharedMemory<std::vector<double>>* guidance_waypoint_output_memory,
+              const std::string& filename);
 
 protected:
     LoopControl Loop(int64_t elapsed_ns) noexcept final;
@@ -26,7 +29,7 @@ private:
 
     // Pointeurs vers la mémoire partagée
     SharedMemory<FSMStates> *control_memory;
-    SharedMemory<FSMStates> *fsm_memory;
+    SharedMemory<FSMStates> *fsm_state_memory;
     SharedMemory<std::vector<double>> *current_state_memory;
     SharedMemory<std::vector<double>> *guidance_waypoint_output_memory;
 
@@ -34,7 +37,7 @@ private:
     std::string filename;
 
     // Variables pour la gestion des points et du temps
-    double timer;  
+    std::chrono::steady_clock::time_point start_time; 
     size_t point;  
     std::vector<std::vector<double>> position; 
     std::vector<std::vector<double>> speed;
@@ -48,6 +51,7 @@ private:
     void initialiserTimer();
     void verifierTemps();
     void updateGuidanceWaypoint();
+    //void afficheDonnees();
 };
 
 #endif // FCF_MODULE_THREAD_H
