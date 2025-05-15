@@ -38,17 +38,17 @@ int main()
     GOD god;
 
     // UART Communication Thread
-    std::shared_ptr<ComThread> com_thread;
-    try
-    {
-        com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Failed to create ComThread: " << e.what() << std::endl;
-        std::cerr << "Startup failure" << std::endl;
-        return 1;
-    }
+    // std::shared_ptr<ComThread> com_thread;
+    // try
+    // {
+    //     com_thread = app.CreateThread<ComThread>(&god.control_input, &god.control_output);
+    // }
+    // catch (std::exception &e)
+    // {
+    //     std::cerr << "Failed to create ComThread: " << e.what() << std::endl;
+    //     std::cerr << "Startup failure" << std::endl;
+    //     return 1;
+    // }
 
     // Control Thread
     auto control_thread = app.CreateThread<ControlThread>(&god.fsm_state_memory,
@@ -68,24 +68,24 @@ int main()
     // auto fsm_thread = app.CreateThread<FSMThread>(&god.fsm_state_memory, true);
 
     // auto log_thread = app.CreateThread<LogThread>(&god);
-    //auto fcf_thread = app.CreateThread<FCFThread>(&god.control_state,
-    //                                              &god.fsm_state_memory,
-    //                                              &god.current_state_memory,
-    //                                              &god.guidance_waypoint_output_memory,
-    //                                              "Flight_plan.json" // ou "../Flight_plan.json" si tu exécutes depuis build/
-    //                                              );
+    // auto fcf_thread = app.CreateThread<FCFThread>(&god.control_state,
+    //                                               &god.fsm_state_memory,
+    //                                               &god.current_state_memory,
+    //                                               &god.guidance_waypoint_output_memory,
+    //                                               "Flight_plan/Flight_plan.json");
+  
 
- 
+
 
     // Start the first trace session before the app starts so we capture all
     // events from the start of the app.
     app.StartTraceSession("tracing.perfetto");
-
+                                                  
     // Start the application, which starts all the registered threads (any thread
     // passed to App::RegisterThread) in the order they are registered.
     app.Start(); // NOTE: run in sudo !
-    std::cout << "Started threads" << std::endl;
-
+      std::cout << "Started threads" << std::endl;
+  
     // This function blocks until SIGINT or SIGTERM are received.
     cactus_rt::WaitForAndHandleTerminationSignal();
 
